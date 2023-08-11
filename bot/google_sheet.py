@@ -1,5 +1,6 @@
 import json
 import re
+import logging
 from datetime import datetime
 
 from google.oauth2.service_account import Credentials
@@ -53,48 +54,61 @@ class SheetGoogle:
         :param comment:
         :return:
         """
-        values = [login_support,
-                  date,
-                  login_kk,
-                  id_telegram,
-                  quantity_viewed_ticket,
-                  comment]
+        try:
+            values = [login_support,
+                      date,
+                      login_kk,
+                      id_telegram,
+                      quantity_viewed_ticket,
+                      comment]
 
-        ss = await self.__authorize(self.table_id)
+            ss = await self.__authorize(self.table_id)
 
-        selected_sheet = await ss.worksheet(self.task_sheet_name)
-        await selected_sheet.append_row(values=values, table_range=self.task_begin_column)
+            selected_sheet = await ss.worksheet(self.task_sheet_name)
+            await selected_sheet.append_row(values=values, table_range=self.task_begin_column)
+        except Exception as e:
+            logging.error('An error occurred during spreadsheet_entry method execution: %s', e)
+            raise e
 
     async def google_sheet_unloading_support_rows(self):
         """
         Extracts all rows from Google table with support staff by skill and converts to a json file
         """
-        ss = await self.__authorize(self.table_id)
+        try:
+            ss = await self.__authorize(self.table_id)
 
-        selected_sheet = await ss.get_worksheet(0)
-        s = await selected_sheet.get_all_values()
+            selected_sheet = await ss.get_worksheet(0)
+            s = await selected_sheet.get_all_values()
 
-        with open('google_table/work.json', "r", encoding="UTF8") as file:  # открываем json файл с навыками всех КК
-            json_dump = file.read()
-            json_read = json.loads(json_dump)
+            with open('google_table/work.json', "r", encoding="UTF8") as file:  # открываем json файл с навыками всех КК
+                json_dump = file.read()
+                json_read = json.loads(json_dump)
 
-        for value in s:
-            if value[6] in json_read and (value[0] == "" or value[0] == "НЕ ДЕКРЕТ") and value[10] != "0":
-                if value[1] == "-" or value[1] == "" or (re.match('\d{2}\.\d{2}\.\d{4}', value[1])
-                                                         and self.__today_date > datetime.strptime(value[1],
-                                                                                                   "%d.%m.%Y")):
-                    json_read[value[6]].append(value[0:10])
-        with open('google_table/unloading.json', "w", encoding="UTF8") as file:
-            file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
+            for value in s:
+                if value[6] in json_read and (value[0] == "" or value[0] == "НЕ ДЕКРЕТ") and value[10] != "0":
+                    if value[1] == "-" or value[1] == "" or (re.match('\d{2}\.\d{2}\.\d{4}', value[1])
+                                                             and self.__today_date > datetime.strptime(value[1],
+                                                                                                       "%d.%m.%Y")):
+                        json_read[value[6]].append(value[0:10])
+            with open('google_table/unloading.json', "w", encoding="UTF8") as file:
+                file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
+
+        except Exception as e:
+            logging.error('An error occurred during google_sheet_unloading_support_rows method execution: %s', e)
+            raise e
 
     async def employee_skills_update(self):
         """
         Method for obtaining quality control staff and their skills
         :return: employee list
         """
-        ss = await self.__authorize(self.table_id)
+        try:
+            ss = await self.__authorize(self.table_id)
+            selected_sheet = await ss.worksheet(self.user_sheet_name)
+            result = await selected_sheet.get_all_values()
+            result = [i[0:3] for i in result]
 
-        selected_sheet = await ss.worksheet(self.user_sheet_name)
-        result = await selected_sheet.get_all_values()
-        result = [i[0:3] for i in result]
-        return result
+            return result
+        except Exception as e:
+            logging.error('An error occurred during employee_skills_update method execution: %s', e)
+            raise e
