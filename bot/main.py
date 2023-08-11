@@ -1,8 +1,10 @@
-from dotenv import load_dotenv
-import logging
-import google_sheet
 import asyncio
+import logging
 import os
+
+from dotenv import load_dotenv
+
+import google_sheet
 
 
 def main():
@@ -16,9 +18,12 @@ def main():
 
     sheet_config = {'table_id': os.environ['SPREADSHEET_ID'],
                     'task_sheet_name': os.environ['TASK_SHEET_NAME'],
-                    'task_begin_column': os.environ.get('TASK_BEGIN_COLUMN', 'A1')}
+                    'task_begin_column': os.environ.get('TASK_BEGIN_COLUMN', 'A1'),
+                    'user_sheet_name': os.environ['USER_SHEET_NAME'],
+                    'admin_sheet_name': os.environ['ADMIN_SHEET_NAME']}
 
     gs = google_sheet.SheetGoogle(sheet_config)
+    asyncio.run(gs.google_sheet_unloading_support_rows(), debug=True)
 
 
 if __name__ == '__main__':
