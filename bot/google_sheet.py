@@ -1,8 +1,9 @@
 import json
-import re
 import logging
+import re
 from datetime import datetime
 
+import aiofiles
 from google.oauth2.service_account import Credentials
 from gspread_asyncio import AsyncioGspreadClientManager
 
@@ -80,8 +81,8 @@ class SheetGoogle:
             selected_sheet = await ss.get_worksheet(0)
             s = await selected_sheet.get_all_values()
 
-            with open('google_table/work.json', "r", encoding="UTF8") as file:  # открываем json файл с навыками всех КК
-                json_dump = file.read()
+            async with aiofiles.open('google_table/work.json', "r", encoding="UTF8") as file:  # открываем json файл с навыками всех КК
+                json_dump = await file.read()
                 json_read = json.loads(json_dump)
 
             for value in s:
@@ -90,8 +91,8 @@ class SheetGoogle:
                                                              and self.__today_date > datetime.strptime(value[1],
                                                                                                        "%d.%m.%Y")):
                         json_read[value[6]].append(value[0:10])
-            with open('google_table/unloading.json', "w", encoding="UTF8") as file:
-                file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
+            async with aiofiles.open('google_table/unloading.json', "w", encoding="UTF8") as file:
+                await file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
 
         except Exception as e:
             logging.error('An error occurred during google_sheet_unloading_support_rows method execution: %s', e)
