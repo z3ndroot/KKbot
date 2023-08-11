@@ -32,6 +32,11 @@ class SheetGoogle:
         self.__today_date = datetime.now()
 
     async def __authorize(self, table_id):
+        """
+        Authorization method in google spreadsheets
+        :param table_id: google table id
+        :return:
+        """
         agc = await self.__agsm.authorize()
         ss = await agc.open_by_key(table_id)
         return ss
@@ -83,6 +88,10 @@ class SheetGoogle:
             file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
 
     async def employee_skills_update(self):
+        """
+        Method for obtaining quality control staff and their skills
+        :return: employee list
+        """
         ss = await self.__authorize(self.table_id)
 
         selected_sheet = await ss.worksheet(self.user_sheet_name)
