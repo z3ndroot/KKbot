@@ -23,11 +23,18 @@ class SheetGoogle:
         Initialization of spreadsheets with specified configuration
         :param config: dictionary with configurations for tables
         """
-        self.agsm = AsyncioGspreadClientManager(get_creds)
+        self.__agsm = AsyncioGspreadClientManager(get_creds)
         self.table_id = config["table_id"]
         self.task_sheet_name = config['task_sheet_name']
         self.task_begin_column = config['task_begin_column']
+        self.user_sheet_name = config['user_sheet_name']
+        self.admin_sheet_name = config['admin_sheet_name']
         self.__today_date = datetime.now()
+
+    async def __authorize(self, table_id):
+        agc = await self.__agsm.authorize()
+        ss = await agc.open_by_key(table_id)
+        return ss
 
     async def spreadsheet_entry(self, login_support: str, date: str, login_kk: str, id_telegram: int,
                                 quantity_viewed_ticket: int, comment=""):
@@ -48,8 +55,7 @@ class SheetGoogle:
                   quantity_viewed_ticket,
                   comment]
 
-        agc = await self.agsm.authorize()
-        ss = await agc.open_by_key(self.table_id)
+        ss = await self.__authorize(self.table_id)
 
         selected_sheet = await ss.worksheet(self.task_sheet_name)
         await selected_sheet.append_row(values=values, table_range=self.task_begin_column)
@@ -58,8 +64,7 @@ class SheetGoogle:
         """
         Extracts all rows from Google table with support staff by skill and converts to a json file
         """
-        agc = await self.agsm.authorize()
-        ss = await agc.open_by_key(self.table_id)
+        ss = await self.__authorize(self.table_id)
 
         selected_sheet = await ss.get_worksheet(0)
         s = await selected_sheet.get_all_values()
@@ -71,7 +76,16 @@ class SheetGoogle:
         for value in s:
             if value[6] in json_read and (value[0] == "" or value[0] == "НЕ ДЕКРЕТ") and value[10] != "0":
                 if value[1] == "-" or value[1] == "" or (re.match('\d{2}\.\d{2}\.\d{4}', value[1])
-                                                         and self.__today_date > datetime.strptime(value[1], "%d.%m.%Y")):
+                                                         and self.__today_date > datetime.strptime(value[1],
+                                                                                                   "%d.%m.%Y")):
                     json_read[value[6]].append(value[0:10])
         with open('google_table/unloading.json', "w", encoding="UTF8") as file:
             file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
+
+    async def employee_skills_update(self):
+        ss = await self.__authorize(self.table_id)
+
+        selected_sheet = await ss.worksheet(self.user_sheet_name)
+        result = await selected_sheet.get_all_values()
+        result = [i[0:3] for i in result]
+        return result
