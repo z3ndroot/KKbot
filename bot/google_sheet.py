@@ -1,5 +1,9 @@
-from gspread_asyncio import AsyncioGspreadClientManager
+import json
+import re
+from datetime import datetime
+
 from google.oauth2.service_account import Credentials
+from gspread_asyncio import AsyncioGspreadClientManager
 
 
 def get_creds():
@@ -23,6 +27,7 @@ class SheetGoogle:
         self.table_id = config["table_id"]
         self.task_sheet_name = config['task_sheet_name']
         self.task_begin_column = config['task_begin_column']
+        self.__today_date = datetime.now()
 
     async def spreadsheet_entry(self, login_support: str, date: str, login_kk: str, id_telegram: int,
                                 quantity_viewed_ticket: int, comment=""):
@@ -48,3 +53,25 @@ class SheetGoogle:
 
         selected_sheet = await ss.worksheet(self.task_sheet_name)
         await selected_sheet.append_row(values=values, table_range=self.task_begin_column)
+
+    async def google_sheet_unloading_support_rows(self):
+        """
+        Extracts all rows from Google table with support staff by skill and converts to a json file
+        """
+        agc = await self.agsm.authorize()
+        ss = await agc.open_by_key(self.table_id)
+
+        selected_sheet = await ss.get_worksheet(0)
+        s = await selected_sheet.get_all_values()
+
+        with open('google_table/work.json', "r", encoding="UTF8") as file:  # открываем json файл с навыками всех КК
+            json_dump = file.read()
+            json_read = json.loads(json_dump)
+
+        for value in s:
+            if value[6] in json_read and (value[0] == "" or value[0] == "НЕ ДЕКРЕТ") and value[10] != "0":
+                if value[1] == "-" or value[1] == "" or (re.match('\d{2}\.\d{2}\.\d{4}', value[1])
+                                                         and self.__today_date > datetime.strptime(value[1], "%d.%m.%Y")):
+                    json_read[value[6]].append(value[0:10])
+        with open('google_table/unloading.json', "w", encoding="UTF8") as file:
+            file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
