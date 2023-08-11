@@ -112,3 +112,19 @@ class SheetGoogle:
         except Exception as e:
             logging.error('An error occurred during employee_skills_update method execution: %s', e)
             raise e
+
+    async def administrator_list_update(self):
+        """
+        Method offloads administrators
+        :return: list of administrators
+        """
+        try:
+            ss = await self.__authorize(self.table_id)
+            selected_sheet = await ss.worksheet(self.admin_sheet_name)
+            result = await selected_sheet.get_all_values()
+
+            return result
+        except Exception as e:
+            logging.error('An error occurred during administrator_list_update method execution: %s', e)
+            raise e
+
