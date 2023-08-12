@@ -6,20 +6,22 @@ class User:
     def __init__(self, config):
         self.db = config['db']
 
-    async def skill_read(self, id_telegram):
+    async def __skill_read(self, id_telegram):
         """
         Getting skills from the database
         :param id_telegram: user id telegram
         :return: list of user skills
         """
         async with aiosqlite.connect(self.db) as cursor:
-            result = await cursor.execute_fetchall(f"""
+            cursor_object = await cursor.execute(f"""
                                 SELECT skill FROM user
                                 WHERE id== {id_telegram}
             """)
-            skill_kk = list(*result)
-
-            return skill_kk
+            result = await cursor_object.fetchone()
+            if result:
+                return result[0].split(', ')
+            else:
+                logging.warning('User %s was not found and no active skills', id_telegram)
 
     async def get_name(self, id_telegram):
         """
@@ -36,4 +38,4 @@ class User:
             if result:
                 return result[0]
             else:
-                logging.info('User %s was not found', id_telegram)
+                logging.warning('User %s was not found', id_telegram)
