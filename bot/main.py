@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 
 import google_sheet
+import user
 
 
 def main():
@@ -22,8 +23,10 @@ def main():
                     'user_sheet_name': os.environ['USER_SHEET_NAME'],
                     'admin_sheet_name': os.environ['ADMIN_SHEET_NAME']}
 
+    db_config = {'db': os.environ['DB_PATH']}
+
     gs = google_sheet.SheetGoogle(sheet_config)
-    asyncio.run(gs.google_sheet_unloading_support_rows(), debug=True)
+    user_db = user.User(db_config)
 
 
 if __name__ == '__main__':
