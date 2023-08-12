@@ -39,3 +39,40 @@ class User:
                 return result[0]
             else:
                 logging.warning('User %s was not found', id_telegram)
+
+    async def output_skill_counter(self, id_telegram):
+        """
+        The method gets a counter from the database and checks it by condition, incrementing or zeroing it.
+        Returns the skill that will be used
+        :param id_telegram: user id telegram
+        :return: skill
+        """
+        try:
+            list_skill = await self.__skill_read(id_telegram)
+            async with aiosqlite.connect(self.db) as cursor:
+                cursor_object = await cursor.execute(f"""
+                                    select num from user
+                                    where id == {id_telegram}
+                """)
+                result = await cursor_object.fetchone()
+                counter = result[0]
+
+                if len(list_skill) - 1 > int(counter):
+                    counter += 1
+                else:
+                    counter = 0
+
+                await cursor.execute(f"""
+                                    UPDATE user
+                                    SET (num) = ('{counter}')
+                                     where id == {id_telegram} 
+                """)
+
+                await cursor.commit()
+
+            return list_skill[counter]
+        except Exception as e:
+            logging.error('An error occurred during output_skill_counter method execution: %s', e)
+            raise e
+
+
