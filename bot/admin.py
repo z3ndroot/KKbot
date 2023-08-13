@@ -41,3 +41,30 @@ class Admin:
         except Exception as e:
             logging.error('An error occurred during output_skill_counter method execution: %s', e)
             raise e
+
+    async def user_update(self, list_user):
+        """
+        Compares user lists, deletes from the database if no user is found, or adds
+        :param list_user: User list
+        :return:
+        """
+        async with aiosqlite.connect(self.db) as cursor:
+            result = await cursor.execute_fetchall("""
+                                    SELECT * from user
+                    """)
+            user_from_database = [list(i[0:3]) for i in result]
+            for i in list_user:
+                if i not in user_from_database:  # add new users
+                    await cursor.execute(f"""
+                                    INSERT INTO user
+                                    VALUES ('{i[0]}','{i[1]}','{i[2]}','0')
+                                       
+                    """)
+            await cursor.commit()
+
+            for i in user_from_database:  # delete users
+                if i not in list_user:
+                    await cursor.execute(f"""DELETE FROM user 
+                                        WHERE id == {i[1]}
+                    """)
+            await cursor.commit()
