@@ -5,3 +5,4 @@ venv/
 credentials.json
 db/
 google_table/
+log/
