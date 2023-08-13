@@ -1,12 +1,37 @@
-import aiosqlite
-import logging
-import aiofiles
+import asyncio
 import json
+import logging
+import os
+
+import aiofiles
+import aiosqlite
 
 
 class Admin:
     def __init__(self, config):
         self.db = config['db']
+        asyncio.run(self.__create_database())
+
+    async def __create_database(self):
+        """
+        The method creates a database with tables user and admin
+        :return:
+        """
+        try:
+            if not os.path.isfile(self.db):
+                async with aiosqlite.connect(self.db) as db:
+                    await db.execute('''
+                            CREATE TABLE admin
+                            (name text, id text)
+                            ''')
+                    await db.execute('''
+                            CREATE TABLE user
+                            (login text, id text, skill text, num int)
+                            ''')
+                    await db.commit()
+        except Exception as e:
+            logging.error('An error occurred during create_database method execution: %s', e)
+            raise e
 
     async def check_access(self, id_telegram):
         """
@@ -109,7 +134,6 @@ class Admin:
                                         SELECT * from admin
                         """)
                 admin_from_database = [list(i) for i in result]
-                print(admin_from_database)
                 for i in list_admin:
                     if i not in admin_from_database:  # add new admin
                         await cursor.execute(f"""
@@ -120,7 +144,6 @@ class Admin:
 
                 for i in admin_from_database:  # delete admin
                     if i not in list_admin:
-                        print(i)
                         await cursor.execute(f"""
                                         DELETE FROM admin
                                         WHERE id == {i[1]}
