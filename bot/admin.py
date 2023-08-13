@@ -1,5 +1,7 @@
 import aiosqlite
 import logging
+import aiofiles
+import json
 
 
 class Admin:
@@ -76,4 +78,21 @@ class Admin:
                 await cursor.commit()
         except Exception as e:
             logging.error('An error occurred during user_update method execution: %s', e)
+            raise e
+
+    async def get_user_from_database(self):
+        """
+        Uploads all users to a separate json file
+        :return:
+        """
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                users = await cursor.execute_fetchall("""
+                                        SELECT * from user
+                            """)
+                result = {"Users": users}
+                async with aiofiles.open('db/user.json', 'w', encoding="UTF8") as file:
+                    await file.write(json.dumps(result, indent=4, ensure_ascii=False))
+        except Exception as e:
+            logging.error('An error occurred during get_user_from_database method execution: %s', e)
             raise e
