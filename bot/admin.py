@@ -96,3 +96,36 @@ class Admin:
         except Exception as e:
             logging.error('An error occurred during get_user_from_database method execution: %s', e)
             raise e
+
+    async def admin_update(self, list_admin):
+        """
+        Compares lists of admin, removes from the database if no admin is found or adds.
+        :param list_admin: User list
+        :return:
+        """
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                result = await cursor.execute_fetchall("""
+                                        SELECT * from admin
+                        """)
+                admin_from_database = [list(i) for i in result]
+                print(admin_from_database)
+                for i in list_admin:
+                    if i not in admin_from_database:  # add new admin
+                        await cursor.execute(f"""
+                                        INSERT INTO admin
+                                        VALUES ('{i[0]}','{i[1]}')
+                        """)
+                await cursor.commit()
+
+                for i in admin_from_database:  # delete admin
+                    if i not in list_admin:
+                        print(i)
+                        await cursor.execute(f"""
+                                        DELETE FROM admin
+                                        WHERE id == {i[1]}
+                        """)
+                await cursor.commit()
+        except Exception as e:
+            logging.error('An error occurred during admin_update method execution: %s', e)
+            raise e
