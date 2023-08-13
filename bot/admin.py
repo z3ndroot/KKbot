@@ -36,7 +36,7 @@ class Admin:
                 """)
                 user_from_database = [list(i[0:3]) for i in result]
                 for i in list_user:
-                    if i not in user_from_database:  # add new users
+                    if i not in user_from_database:  # update skills
                         await cursor.execute(f"""
                                         UPDATE user
                                         SET (skill) = ('{i[2]}')
@@ -53,23 +53,27 @@ class Admin:
         :param list_user: User list
         :return:
         """
-        async with aiosqlite.connect(self.db) as cursor:
-            result = await cursor.execute_fetchall("""
-                                    SELECT * from user
-                    """)
-            user_from_database = [list(i[0:3]) for i in result]
-            for i in list_user:
-                if i not in user_from_database:  # add new users
-                    await cursor.execute(f"""
-                                    INSERT INTO user
-                                    VALUES ('{i[0]}','{i[1]}','{i[2]}','0')
-                                       
-                    """)
-            await cursor.commit()
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                result = await cursor.execute_fetchall("""
+                                        SELECT * from user
+                        """)
+                user_from_database = [list(i[0:3]) for i in result]
+                for i in list_user:
+                    if i not in user_from_database:  # add new users
+                        await cursor.execute(f"""
+                                        INSERT INTO user
+                                        VALUES ('{i[0]}','{i[1]}','{i[2]}','0')
+                                           
+                        """)
+                await cursor.commit()
 
-            for i in user_from_database:  # delete users
-                if i not in list_user:
-                    await cursor.execute(f"""DELETE FROM user 
-                                        WHERE id == {i[1]}
-                    """)
-            await cursor.commit()
+                for i in user_from_database:  # delete users
+                    if i not in list_user:
+                        await cursor.execute(f"""DELETE FROM user 
+                                            WHERE id == {i[1]}
+                        """)
+                await cursor.commit()
+        except Exception as e:
+            logging.error('An error occurred during user_update method execution: %s', e)
+            raise e
