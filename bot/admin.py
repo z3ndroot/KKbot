@@ -22,7 +22,7 @@ class Admin:
                 async with aiosqlite.connect(self.db) as db:
                     await db.execute('''
                             CREATE TABLE admin
-                            (name text, id text)
+                            (login text, id text)
                             ''')
                     await db.execute('''
                             CREATE TABLE user
