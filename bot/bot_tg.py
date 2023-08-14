@@ -1,6 +1,8 @@
 import asyncio
+import json
 import logging
 
+import aiofiles
 from aiogram import Bot
 from aiogram import types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -64,6 +66,28 @@ class BotTelegram:
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.admin_buttons)
         elif await self.db_user.get_name(str(message.from_user.id)):
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.get_task)
+
+    @staticmethod
+    async def distributor(skill):
+        """
+        Static method for skill allocation
+        :param skill: User skill
+        """
+        async with aiofiles.open("google_table/unloading.json", 'r', encoding="UTF8") as file:
+            file_content = await file.read()
+            templates = json.loads(file_content)
+        task_support = templates.get(skill, "Нет навыка")
+        if not task_support:
+            return f"Нет активных задач по навыку {skill}("
+        if task_support != 'Нет навыка':
+            support_kk = max(task_support, key=lambda sort_sup: int(sort_sup[10]))
+            task_support.remove(support_kk)
+            templates[skill] = task_support
+            async with aiofiles.open("google_table/unloading.json", "w", encoding="UTF8") as file:
+                await file.write(json.dumps(templates, indent=4, ensure_ascii=False))
+            return support_kk
+        else:
+            return f"Проблемы с навыком {skill}, обратись к рг("
 
     def _reg_handlers(self, dp: Dispatcher):
         """
