@@ -1,18 +1,19 @@
-import asyncio
 import logging
 import os
 
 from dotenv import load_dotenv
 
 import google_sheet
-import user
+from user import User
+from admin import Admin
+from bot_tg import BotTelegram
 
 
 def main():
     load_dotenv()
 
     # Setup logging
-    file_log = logging.FileHandler('chat.log')
+    file_log = logging.FileHandler('log/chat.log')
     console_out = logging.StreamHandler()
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
                         handlers=(file_log, console_out))
@@ -25,8 +26,14 @@ def main():
 
     db_config = {'db': os.environ['DB_PATH']}
 
+    bot_config = {'token_bot': os.environ['TOKEN_TELEGRAM'],
+                  'superusers': os.environ['SUPERUSER']}
+
     gs = google_sheet.SheetGoogle(sheet_config)
-    user_db = user.User(db_config)
+    db_admin = Admin(db_config)
+    db_user = User(db_config)
+    bot_tg = BotTelegram(bot_config, gs, db_admin, db_user)
+    bot_tg.run()
 
 
 if __name__ == '__main__':
