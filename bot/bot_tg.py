@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiogram import Bot
 from aiogram import types
@@ -6,9 +7,10 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils import executor
+
 from admin import Admin
-from user import User
 from google_sheet import SheetGoogle
+from user import User
 
 
 class BotTelegram:
@@ -57,6 +59,7 @@ class BotTelegram:
         """
         Method of processing the start command
         """
+        logging.info(f'The /start command from user: {message.from_user.full_name} || @{message.from_user.username}')
         if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.admin_buttons)
         elif await self.db_user.get_name(str(message.from_user.id)):
