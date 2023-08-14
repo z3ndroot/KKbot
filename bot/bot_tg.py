@@ -75,7 +75,8 @@ class BotTelegram:
         """
         Method of processing the start command
         """
-        logging.info(f'The /start command from user: {message.from_user.full_name} || @{message.from_user.username}')
+        logging.info(f'The /start command from  @{message.from_user.username} '
+                     f'(full name: {message.from_user.full_name})')
         if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.admin_buttons)
         elif await self.db_user.get_name(str(message.from_user.id)):
@@ -85,7 +86,8 @@ class BotTelegram:
         """
         Method for sending a message with information about the support
         """
-        logging.info(f"Request for an assignment from {message.from_user.full_name} || @{message.from_user.username}")
+        logging.info(f"Request for an assignment from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
 
         name = await self.db_user.get_name(str(message.from_user.id))
         if name:
@@ -112,13 +114,37 @@ class BotTelegram:
                     'comment': '',
                 }
                 await self.bot.send_message(message.from_user.id, text=finished_form, parse_mode='HTML')
-                logging.info(f"Task successfully completed {task[2]} for {message.from_user.full_name} || "
-                             f"@{message.from_user.username}")
+                logging.info(f"Task successfully completed {task[2]} for @{message.from_user.username} "
+                             f"(full name: {message.from_user.full_name})")
                 await Form.number_tickets.set()
                 await self.bot.send_message(message.from_user.id, "Введи кол-во оценённых тикетов:",
                                             reply_markup=ReplyKeyboardRemove())
                 async with state.proxy() as data:
                     data['data_dict'] = data_dict
+
+    async def number_of_tickets(self, message: types.Message, state: FSMContext):
+        """
+        Method of obtaining the number of evaluated tickets and then recording in google tables
+        """
+        if message.text.isdigit():
+            if int(message.text) == 0:
+                await self.bot.send_message(message.from_user.id,
+                                            "⚠Напишите комментарий к агенту⚠:",
+                                            reply_markup=self.buttons_comment)
+                await Form.comment.set()
+            elif int(message.text) > 0:
+                time_mess = await self.bot.send_message(message.from_user.id, '⏱Пожалуйста подождите.....')
+                async with state.proxy() as data:
+                    data_dict: dict = data['data_dict']
+                data_dict.update({'quantity_viewed_ticket': int(message.text)})
+                await self.gs.spreadsheet_entry(**data_dict)
+                logging.info(f"Successful google table entry for a user @{message.from_user.username} "
+                             f"(full name: {message.from_user.full_name})")
+                await time_mess.delete()
+                await state.finish()
+                await self.bot.send_message(message.from_user.id, "Количество записано✅", reply_markup=self.get_task)
+        else:
+            await self.bot.send_message(message.from_user.id, "Ответ должно содержать целое число!!!")
 
     @staticmethod
     async def distributor(skill):
@@ -148,6 +174,7 @@ class BotTelegram:
         """
         dp.register_message_handler(self.start, commands="start")
         dp.register_message_handler(self.get_job, text="Получить задание", state=None)
+        dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
 
     def run(self):
         """
