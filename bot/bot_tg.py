@@ -146,6 +146,21 @@ class BotTelegram:
         else:
             await self.bot.send_message(message.from_user.id, "Ответ должно содержать целое число!!!")
 
+    async def comment(self, message: types.Message, state: FSMContext):
+        """
+         Method for recording a comment if no ticket has been checked
+        """
+        time_mess = await self.bot.send_message(message.from_user.id, "⏱Пожалуйста подождите.....")
+        async with state.proxy() as data:
+            data_dict: dict = data['data_dict']
+        data_dict.update({'comment': message.text})
+        await self.gs.spreadsheet_entry(**data_dict)
+        logging.info(f"Successful ticket skip, comment recorded for @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        await time_mess.delete()
+        await state.finish()
+        await message.reply("Комментарий записан✅", reply_markup=self.get_task)
+
     @staticmethod
     async def distributor(skill):
         """
@@ -175,6 +190,7 @@ class BotTelegram:
         dp.register_message_handler(self.start, commands="start")
         dp.register_message_handler(self.get_job, text="Получить задание", state=None)
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
+        dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
 
     def run(self):
         """
