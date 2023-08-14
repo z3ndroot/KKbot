@@ -90,7 +90,7 @@ class SheetGoogle:
                     if value[1] == "-" or value[1] == "" or (re.match('\d{2}\.\d{2}\.\d{4}', value[1])
                                                              and self.__today_date > datetime.strptime(value[1],
                                                                                                        "%d.%m.%Y")):
-                        json_read[value[6]].append(value[0:10])
+                        json_read[value[6]].append(value[0:11])
             async with aiofiles.open('google_table/unloading.json', "w", encoding="UTF8") as file:
                 await file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
 
