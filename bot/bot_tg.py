@@ -121,6 +121,8 @@ class BotTelegram:
                                             reply_markup=ReplyKeyboardRemove())
                 async with state.proxy() as data:
                     data['data_dict'] = data_dict
+            else:
+                await self.bot.send_message(message.from_user.id, task)
 
     async def number_of_tickets(self, message: types.Message, state: FSMContext):
         """
