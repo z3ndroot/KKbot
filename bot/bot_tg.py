@@ -193,6 +193,20 @@ class BotTelegram:
         else:
             return f"Проблемы с навыком {skill}, обратись к рг("
 
+    async def unloading_from_tables(self, message: types.Message):
+        """
+        Method for updating the QC upload
+        """
+        logging.info(f"Table unload request from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers:
+            time_mess = await self.bot.send_message(message.from_user.id, "⏱Выгрузка. Пожалуйста подождите.....")
+            await self.gs.google_sheet_unloading_support_rows()
+            logging.info(f"Successful upload for @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+            await time_mess.delete()
+            await message.reply("Выгрузка обновлена✅")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -201,6 +215,7 @@ class BotTelegram:
         dp.register_message_handler(self.get_job, text="Получить задание", state=None)
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
         dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
+        dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
 
     def run(self):
         """
