@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import time
 from datetime import date
 
 import aiofiles
@@ -111,6 +112,7 @@ class BotTelegram:
                     'login_kk': name,
                     'id_telegram': message.from_user.id,
                     'quantity_viewed_ticket': 0,
+                    'timer': time.time(),
                     'comment': '',
                 }
                 await self.bot.send_message(message.from_user.id, text=finished_form, parse_mode='HTML')
@@ -138,7 +140,10 @@ class BotTelegram:
                 time_mess = await self.bot.send_message(message.from_user.id, '⏱Пожалуйста подождите.....')
                 async with state.proxy() as data:
                     data_dict: dict = data['data_dict']
-                data_dict.update({'quantity_viewed_ticket': int(message.text)})
+                timer = time.time() - data_dict['timer']
+                data_dict.update({'quantity_viewed_ticket': int(message.text),
+                                  'timer': timer
+                                  })
                 await self.gs.spreadsheet_entry(**data_dict)
                 logging.info(f"Successful google table entry for a user @{message.from_user.username} "
                              f"(full name: {message.from_user.full_name})")
@@ -155,7 +160,10 @@ class BotTelegram:
         time_mess = await self.bot.send_message(message.from_user.id, "⏱Пожалуйста подождите.....")
         async with state.proxy() as data:
             data_dict: dict = data['data_dict']
-        data_dict.update({'comment': message.text})
+        timer = time.time() - data_dict['timer']
+        data_dict.update({'comment': message.text,
+                          'timer': timer,
+                          })
         await self.gs.spreadsheet_entry(**data_dict)
         logging.info(f"Successful ticket skip, comment recorded for @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
