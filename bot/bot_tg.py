@@ -237,6 +237,17 @@ class BotTelegram:
             logging.warning('The filter is not correct %s', e)
             await message.reply(f"Файл некорректный❌({e})")
 
+    async def filter_info(self, message: types.Message):
+        """
+        Method for sending a filter file
+        """
+        logging.info(f"Filter unloading request from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+            await self.bot.send_document(message.from_user.id, open("google_table/work.json", 'rb'))
+            logging.info(f"The file work.json has been sent @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -248,6 +259,7 @@ class BotTelegram:
         dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
         dp.register_message_handler(self.filter_update, text="Обновить группы")
         dp.register_message_handler(self.filter_download, content_types=types.ContentType.DOCUMENT, state=Form.file)
+        dp.register_message_handler(self.filter_info, text="Список групп")
 
     def run(self):
         """
