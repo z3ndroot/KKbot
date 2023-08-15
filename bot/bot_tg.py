@@ -314,6 +314,7 @@ class BotTelegram:
         dp.register_message_handler(self.user_update, text="Обновить аудиторов")
         dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
         dp.register_message_handler(self.user_info, text='Список аудиторов')
+        dp.register_message_handler(self.admin_update, text='Обновить админов')
 
     def run(self):
         """
