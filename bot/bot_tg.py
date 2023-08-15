@@ -274,6 +274,18 @@ class BotTelegram:
                          f"(full name: {message.from_user.full_name})")
             await message.reply("База данных обновлена✅")
 
+    async def user_info(self, message: types.Message):
+        """
+        Method to get the list of users
+        """
+        logging.info(f"Request for a list of users from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+            await self.db_admin.get_user_from_database()
+            await self.bot.send_document(message.from_user.id, open('db/user.json', 'rb'))
+            logging.info(f"The file user.json has been sent @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -288,6 +300,7 @@ class BotTelegram:
         dp.register_message_handler(self.filter_info, text="Список групп")
         dp.register_message_handler(self.user_update, text="Обновить аудиторов")
         dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
+        dp.register_message_handler(self.user_info, text='Список аудиторов')
 
     def run(self):
         """
