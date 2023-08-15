@@ -44,6 +44,7 @@ class BotTelegram:
         self.superusers = config["superusers"].split(",")
         self.dp = Dispatcher(self.bot, storage=self.storage)
         self.gs: SheetGoogle = gs
+        self.feedback_id_chat = config['feedback_id']
         self.db_admin: Admin = db_admin
         self.db_user: User = db_user
         self.button_comment = [
@@ -215,7 +216,7 @@ class BotTelegram:
         """
         logging.info(f"Filter update request from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             await self.bot.send_message(message.from_user.id, 'Отправь мне файл work.json')
             await Form.file.set()
 
@@ -245,7 +246,7 @@ class BotTelegram:
         """
         logging.info(f"Filter unloading request from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             await self.bot.send_document(message.from_user.id, open("google_table/work.json", 'rb'))
             logging.info(f"The file work.json has been sent @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
@@ -256,7 +257,7 @@ class BotTelegram:
         """
         logging.info(f"Request to update the list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             user_list = await self.gs.employee_skills_update()
             await self.db_admin.user_update(user_list)
             logging.info(f"Successful update of the User base from @{message.from_user.username} "
@@ -269,7 +270,7 @@ class BotTelegram:
         """
         logging.info(f"Request to update the list skill of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             user_list = await self.gs.employee_skills_update()
             await self.db_admin.skills_update(user_list)
             logging.info(f"Successful update of the User base from @{message.from_user.username} "
@@ -282,7 +283,7 @@ class BotTelegram:
         """
         logging.info(f"Request for a list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
             await self.db_admin.get_user_from_database()
             await self.bot.send_document(message.from_user.id, open('db/user.json', 'rb'))
             logging.info(f"The file user.json has been sent @{message.from_user.username} "
@@ -317,6 +318,16 @@ class BotTelegram:
         self.scheduler.add_job(self.gs.google_sheet_unloading_support_rows, 'cron', hour=1, minute=0)
         self.scheduler.start()
 
+    async def forward_feedback(self, message: types.Message):
+        """
+        Method for sending feedback
+        """
+        logging.info(f"The user @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name}) sent the file")
+        if await self.db_user.get_name(message.from_user.id):
+            await self.bot.forward_message(self.feedback_id_chat, message.from_user.id, message.message_id)
+            await message.reply("забрал ОС✅")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -334,6 +345,7 @@ class BotTelegram:
         dp.register_message_handler(self.user_info, text='Список аудиторов')
         dp.register_message_handler(self.admin_update, text='Обновить админов')
         dp.register_message_handler(self.get_log, text='Логи')
+        dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
 
     def run(self):
         """
