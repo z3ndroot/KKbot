@@ -22,7 +22,9 @@ def main():
                     'task_sheet_name': os.environ['TASK_SHEET_NAME'],
                     'task_begin_column': os.environ.get('TASK_BEGIN_COLUMN', 'A1'),
                     'user_sheet_name': os.environ['USER_SHEET_NAME'],
-                    'admin_sheet_name': os.environ['ADMIN_SHEET_NAME']}
+                    'admin_sheet_name': os.environ['ADMIN_SHEET_NAME'],
+                    'addition_sheet_name': os.environ['ADDITION_SHEET_NAME'],
+                    'addition_begin_column': os.environ['ADDITION_BEGIN_COLUMN']}
 
     db_config = {'db': os.environ['DB_PATH']}
 
