@@ -248,6 +248,19 @@ class BotTelegram:
             logging.info(f"The file work.json has been sent @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
 
+    async def user_update(self, message: types.Message):
+        """
+        Method for updating the User table
+        """
+        logging.info(f"Request to update the list of users from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+            user_list = await self.gs.employee_skills_update()
+            await self.db_admin.user_update(user_list)
+            logging.info(f"Successful update of the User base from @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+            await message.reply("База данных обновлена✅")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -260,6 +273,7 @@ class BotTelegram:
         dp.register_message_handler(self.filter_update, text="Обновить группы")
         dp.register_message_handler(self.filter_download, content_types=types.ContentType.DOCUMENT, state=Form.file)
         dp.register_message_handler(self.filter_info, text="Список групп")
+        dp.register_message_handler(self.user_update, text="Обновить аудиторов")
 
     def run(self):
         """
