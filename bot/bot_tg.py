@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import date
 
@@ -45,6 +46,7 @@ class BotTelegram:
         self.dp = Dispatcher(self.bot, storage=self.storage)
         self.gs: SheetGoogle = gs
         self.feedback_id_chat = config['feedback_id']
+        self.additional_id = config['additional_id']
         self.db_admin: Admin = db_admin
         self.db_user: User = db_user
         self.button_comment = [
@@ -328,6 +330,31 @@ class BotTelegram:
             await self.bot.forward_message(self.feedback_id_chat, message.from_user.id, message.message_id)
             await message.reply("забрал ОС✅")
 
+    async def additional_task(self, message: types.Message):
+        """
+        Method of receiving a message about additional tasks and recording them
+        """
+        if str(message.chat.id) == self.additional_id:
+            if await self.db_user.get_name(message.from_user.id):
+                logging.info(f"A new task has been sent from @{message.from_user.username} "
+                             f"(full name: {message.from_user.full_name})")
+                text_chunks = message.text.split('\n')
+                text_chunks = [i.strip() for i in text_chunks]
+                if len(text_chunks) == 5:
+                    login = text_chunks[1]
+                    task = text_chunks[2]
+                    date_task = text_chunks[3] if bool(re.match(r'^\d{2}\.\d{2}\.\d{4}$',
+                                                                text_chunks[3])) else False
+                    quantity = text_chunks[4]
+                    if date_task:
+                        await self.gs.addition_task_entry(login, task, date_task, quantity)
+                        logging.info(f"The task is recorded in a google doc for @{message.from_user.username} "
+                                     f"(full name: {message.from_user.full_name})")
+                    else:
+                        await message.reply('Ошибка! Неверный формат даты. Необходимо указать дату в 4 строке.')
+                else:
+                    await message.reply('Ошибка! Отчет не соответствует требованиям')
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -346,6 +373,7 @@ class BotTelegram:
         dp.register_message_handler(self.admin_update, text='Обновить админов')
         dp.register_message_handler(self.get_log, text='Логи')
         dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
+        dp.register_message_handler(self.additional_task, regexp="#доп_задание")
 
     def run(self):
         """
