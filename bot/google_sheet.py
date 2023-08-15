@@ -44,7 +44,7 @@ class SheetGoogle:
         return ss
 
     async def spreadsheet_entry(self, login_support: str, date: str, login_kk: str, id_telegram: int,
-                                quantity_viewed_ticket: int, comment=""):
+                                quantity_viewed_ticket: int, timer, comment=""):
         """
         Writing the result of the assessment in a google spreadsheet
         :param login_support: support login
@@ -53,6 +53,7 @@ class SheetGoogle:
         :param id_telegram: user id
         :param quantity_viewed_ticket: number of tickets
         :param comment:
+        :param timer:
         :return:
         """
         try:
@@ -61,6 +62,7 @@ class SheetGoogle:
                       login_kk,
                       id_telegram,
                       quantity_viewed_ticket,
+                      timer,
                       comment]
 
             ss = await self.__authorize(self.table_id)
