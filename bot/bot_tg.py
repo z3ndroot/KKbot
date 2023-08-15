@@ -60,7 +60,7 @@ class BotTelegram:
             KeyboardButton('Список аудиторов'),
             KeyboardButton('Список групп'),
             KeyboardButton('Выгрузка'),
-            KeyboardButton('Ошибки'),
+            KeyboardButton('Логи'),
         ]
         self.buttons_comment = ReplyKeyboardMarkup(resize_keyboard=True)
         self.buttons_comment.add(*self.button_comment)
@@ -299,6 +299,15 @@ class BotTelegram:
             logging.info(f"Successful update of the Admin base from @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
 
+    async def get_log(self, message: types.Message):
+        """
+        Method for unloading the log
+        """
+        logging.info(f"Request to unload logs from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers:
+            await self.bot.send_document(message.from_user.id, open('log/chat.log', 'rb'))
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -315,6 +324,7 @@ class BotTelegram:
         dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
         dp.register_message_handler(self.user_info, text='Список аудиторов')
         dp.register_message_handler(self.admin_update, text='Обновить админов')
+        dp.register_message_handler(self.get_log, text='Логи')
 
     def run(self):
         """
