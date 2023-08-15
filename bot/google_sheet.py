@@ -88,11 +88,11 @@ class SheetGoogle:
             ss = await self.__authorize(self.table_id)
 
             selected_sheet = await ss.worksheet(self.addition_sheet_name)
-            await selected_sheet.append_row(values=[login, task, date, quantity], table_range=self.addition_begin_column)
+            await selected_sheet.append_row(values=[login, task, date, quantity],
+                                            table_range=self.addition_begin_column)
         except Exception as e:
             logging.error('An error occurred during addition_task_entry method execution: %s', e)
             raise e
-
 
     async def google_sheet_unloading_support_rows(self):
         """
