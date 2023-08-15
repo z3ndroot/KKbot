@@ -13,6 +13,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils import executor
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from admin import Admin
 from google_sheet import SheetGoogle
@@ -38,6 +39,7 @@ class BotTelegram:
         :param db_user: User object
         """
         self.storage = MemoryStorage()
+        self.scheduler = AsyncIOScheduler()
         self.bot = Bot(token=config["token_bot"])
         self.superusers = config["superusers"].split(",")
         self.dp = Dispatcher(self.bot, storage=self.storage)
@@ -308,6 +310,13 @@ class BotTelegram:
         if str(message.from_user.id) in self.superusers:
             await self.bot.send_document(message.from_user.id, open('log/chat.log', 'rb'))
 
+    async def on_startup(self, dp: Dispatcher):
+        """
+        Automatic unloading
+        """
+        self.scheduler.add_job(self.gs.google_sheet_unloading_support_rows, 'cron', hour=1, minute=0)
+        self.scheduler.start()
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -333,4 +342,4 @@ class BotTelegram:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         self._reg_handlers(self.dp)
-        executor.start_polling(self.dp, skip_updates=True, loop=loop)
+        executor.start_polling(self.dp, skip_updates=True, on_startup=self.on_startup, loop=loop)
