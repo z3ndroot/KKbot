@@ -207,6 +207,36 @@ class BotTelegram:
             await time_mess.delete()
             await message.reply("Выгрузка обновлена✅")
 
+    async def filter_update(self, message: types.Message):
+        """
+        Method for requesting a filter update
+        """
+        logging.info(f"Filter update request from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+            await self.bot.send_message(message.from_user.id, 'Отправь мне файл work.json')
+            await Form.file.set()
+
+    async def filter_download(self, message: types.Message, state: FSMContext):
+        """
+        Method for loading the filter
+        """
+        file_id = message.document.file_id
+        file = await self.bot.get_file(file_id)
+        file_path = file.file_path
+        await self.bot.download_file(file_path, 'google_table/work.json')
+        try:
+            async with aiofiles.open('google_table/work.json', 'r', encoding="UTF8") as file:
+                file_content = await file.read()
+                json.loads(file_content)
+            logging.info(f"Filter has been successfully loaded for @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+            await message.reply("Файл загружен✅")
+            await state.finish()
+        except ValueError as e:
+            logging.warning('The filter is not correct %s', e)
+            await message.reply(f"Файл некорректный❌({e})")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -216,6 +246,8 @@ class BotTelegram:
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
         dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
         dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
+        dp.register_message_handler(self.filter_update, text="Обновить группы")
+        dp.register_message_handler(self.filter_download, content_types=types.ContentType.DOCUMENT, state=Form.file)
 
     def run(self):
         """
