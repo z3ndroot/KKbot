@@ -28,7 +28,8 @@ def main():
 
     bot_config = {'token_bot': os.environ['TOKEN_TELEGRAM'],
                   'superusers': os.environ['SUPERUSER'],
-                  'feedback_id': os.environ['FEEDBACK_ID']}
+                  'feedback_id': os.environ['FEEDBACK_ID'],
+                  'additional_id': os.environ['ADDITIONAL_ID']}
 
     gs = google_sheet.SheetGoogle(sheet_config)
     db_admin = Admin(db_config)
