@@ -286,6 +286,19 @@ class BotTelegram:
             logging.info(f"The file user.json has been sent @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
 
+    async def admin_update(self, message: types.Message):
+        """
+        A method for renewing admins
+        """
+        logging.info(f"Request to update the list of admins from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers:
+            list_admin = await self.gs.administrator_list_update()
+            await self.db_admin.admin_update(list_admin)
+            await message.reply("База данных Администраторов обновлена✅")
+            logging.info(f"Successful update of the Admin base from @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
