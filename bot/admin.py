@@ -39,16 +39,19 @@ class Admin:
         :param id_telegram: user id telegram
         :return:
         """
-        async with aiosqlite.connect(self.db) as cursor:
-            cursor_object = await cursor.execute(f"""
-                                select login from admin
-                                where id == {id_telegram}
-            """)
-            result = await cursor_object.fetchone()
-            if result:
-                return result
-            else:
-                logging.warning('Admin %s was not found', id_telegram)
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                cursor_object = await cursor.execute(f"""
+                                    select login from admin
+                                    where id == {id_telegram}
+                """)
+                result = await cursor_object.fetchone()
+                if result:
+                    return result
+        except Exception as e:
+            logging.error('An error occurred during check_access method execution: %s', e)
+            raise e
+
 
     async def skills_update(self, list_user):
         """
