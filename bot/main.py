@@ -9,14 +9,35 @@ from admin import Admin
 from bot_tg import BotTelegram
 
 
+def check_folders(folders: list):
+    """
+    Creating folders if they are missing
+    :param folders:
+    :return: list missing folders
+    """
+    missing_folder = []
+    for folder in folders:
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+            missing_folder.append(folder)
+    return missing_folder
+
+
 def main():
     load_dotenv()
+
+    # Check missing folders
+    folders = ['db', 'google_table', 'log']
+    missing_folder = check_folders(folders)
 
     # Setup logging
     file_log = logging.FileHandler('log/chat.log')
     console_out = logging.StreamHandler()
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
                         handlers=(file_log, console_out))
+
+    if len(missing_folder) > 0:
+        logging.info(f'These folders {", ".join(missing_folder)} were missing and were successfully created')
 
     sheet_config = {'table_id': os.environ['SPREADSHEET_ID'],
                     'task_sheet_name': os.environ['TASK_SHEET_NAME'],
