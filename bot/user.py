@@ -29,16 +29,18 @@ class User:
         :param id_telegram: user id telegram
         :return: username
         """
-        async with aiosqlite.connect(self.db) as cursor:
-            cursor_object = await cursor.execute(f"""
-                                select login from user
-                                where id == {id_telegram}
-            """)
-            result = await cursor_object.fetchone()
-            if result:
-                return result[0]
-            else:
-                logging.warning('User %s was not found', id_telegram)
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                cursor_object = await cursor.execute(f"""
+                                    select login from user
+                                    where id == {id_telegram}
+                """)
+                result = await cursor_object.fetchone()
+                if result:
+                    return result[0]
+        except Exception as e:
+            logging.error('An error occurred during get_name method execution: %s', e)
+            raise e
 
     async def output_skill_counter(self, id_telegram):
         """
