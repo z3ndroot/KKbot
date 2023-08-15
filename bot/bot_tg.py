@@ -261,6 +261,19 @@ class BotTelegram:
                          f"(full name: {message.from_user.full_name})")
             await message.reply("База данных обновлена✅")
 
+    async def user_skill_update(self, message: types.Message):
+        """
+        Method for updating skills
+        """
+        logging.info(f"Request to update the list skill of users from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or self.db_admin.check_access(str(message.from_user.id)):
+            user_list = await self.gs.employee_skills_update()
+            await self.db_admin.skills_update(user_list)
+            logging.info(f"Successful update of the User base from @{message.from_user.username} "
+                         f"(full name: {message.from_user.full_name})")
+            await message.reply("База данных обновлена✅")
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
