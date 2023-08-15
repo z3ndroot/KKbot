@@ -287,6 +287,7 @@ class BotTelegram:
         dp.register_message_handler(self.filter_download, content_types=types.ContentType.DOCUMENT, state=Form.file)
         dp.register_message_handler(self.filter_info, text="Список групп")
         dp.register_message_handler(self.user_update, text="Обновить аудиторов")
+        dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
 
     def run(self):
         """
