@@ -89,19 +89,19 @@ class Admin:
                                         SELECT * from user
                         """)
                 user_from_database = [list(i[0:3]) for i in result]
+                for i in user_from_database:  # delete users
+                    if i not in list_user:
+                        await cursor.execute(f"""DELETE FROM user 
+                                            WHERE id == {i[1]}
+                        """)
+                await cursor.commit()
+
                 for i in list_user:
                     if i not in user_from_database:  # add new users
                         await cursor.execute(f"""
                                         INSERT INTO user
                                         VALUES ('{i[0]}','{i[1]}','{i[2]}','0')
                                            
-                        """)
-                await cursor.commit()
-
-                for i in user_from_database:  # delete users
-                    if i not in list_user:
-                        await cursor.execute(f"""DELETE FROM user 
-                                            WHERE id == {i[1]}
                         """)
                 await cursor.commit()
         except Exception as e:
@@ -137,19 +137,19 @@ class Admin:
                                         SELECT * from admin
                         """)
                 admin_from_database = [list(i) for i in result]
-                for i in list_admin:
-                    if i not in admin_from_database:  # add new admin
-                        await cursor.execute(f"""
-                                        INSERT INTO admin
-                                        VALUES ('{i[0]}','{i[1]}')
-                        """)
-                await cursor.commit()
-
                 for i in admin_from_database:  # delete admin
                     if i not in list_admin:
                         await cursor.execute(f"""
                                         DELETE FROM admin
                                         WHERE id == {i[1]}
+                        """)
+                await cursor.commit()
+
+                for i in list_admin:
+                    if i not in admin_from_database:  # add new admin
+                        await cursor.execute(f"""
+                                        INSERT INTO admin
+                                        VALUES ('{i[0]}','{i[1]}')
                         """)
                 await cursor.commit()
         except Exception as e:
