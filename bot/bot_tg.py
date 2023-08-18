@@ -102,6 +102,7 @@ class BotTelegram:
             if isinstance(task, list):
                 time_now = date.today()
                 finished_form = (f"Статус : {task[0]}\n"
+                                 f"Дата начала оценки : {task[1]}\n"
                                  f"Логин : {task[2]}\n"
                                  f"Ссылка на оценку: <a href=\"{task[3]}\">{task[2]}</a>\n"
                                  f"Примечание : {task[4]}\n"
