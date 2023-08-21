@@ -110,7 +110,7 @@ class SheetGoogle:
                 json_read = json.loads(json_dump)
 
             for value in s:
-                status = value[1]  # support status
+                status = value[0]  # support status
                 date = value[1]  # ticket evaluation date
                 skill = value[6]  # offload skill
                 open_tickets_count = value[10]  # number of unchecked tickets
@@ -124,7 +124,7 @@ class SheetGoogle:
 
                 if skill_present and is_valid_status and is_valid_open_tickets:
                     if is_not_date or is_valid_date:
-                        json_read[value[6]].append(value[0:11])
+                        json_read[skill].append(value[0:11])
             async with aiofiles.open('google_table/unloading.json', "w", encoding="UTF8") as file:
                 await file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
 
