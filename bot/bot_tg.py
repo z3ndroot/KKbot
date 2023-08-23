@@ -199,6 +199,18 @@ class BotTelegram:
         else:
             return f"Проблемы с навыком {skill}, обратись к рг("
 
+    async def __update_support_rows_for_database(self):
+        """
+        Updating of the support lines
+        :return:
+        """
+        try:
+            rows = await self.gs.google_sheet_unloading_support_rows()
+            await self.db_admin.unloading(rows)
+        except Exception as e:
+            logging.error('An error occurred during __update_support_rows_for_database method execution: %s', e)
+            raise e
+
     async def unloading_from_tables(self, message: types.Message):
         """
         Method for updating the QC upload
@@ -207,7 +219,7 @@ class BotTelegram:
                      f"(full name: {message.from_user.full_name})")
         if str(message.from_user.id) in self.superusers:
             time_mess = await self.bot.send_message(message.from_user.id, "⏱Выгрузка. Пожалуйста подождите.....")
-            await self.gs.google_sheet_unloading_support_rows()
+            await self.__update_support_rows_for_database()
             logging.info(f"Successful upload for @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
             await time_mess.delete()
@@ -318,7 +330,7 @@ class BotTelegram:
         """
         Automatic unloading
         """
-        self.scheduler.add_job(self.gs.google_sheet_unloading_support_rows, 'cron', hour=1, minute=0)
+        self.scheduler.add_job(self.__update_support_rows_for_database, 'cron', hour=1, minute=0)
         self.scheduler.start()
 
     async def forward_feedback(self, message: types.Message):
