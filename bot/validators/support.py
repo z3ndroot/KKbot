@@ -4,6 +4,9 @@ from pydantic import BaseModel, field_validator
 
 
 class Support(BaseModel):
+    """
+    Validation of row supports
+    """
     status: str
     date: str
     login: str
