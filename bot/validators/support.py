@@ -16,7 +16,7 @@ class Support(BaseModel):
     skill: str
     output: str
     appreciated: int
-    autochecks: int
+    autochecks: int | str
     residue: int
 
     @field_validator('status')
