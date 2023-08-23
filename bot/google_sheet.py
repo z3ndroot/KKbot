@@ -1,9 +1,6 @@
-import json
-import logging
-import re
-from datetime import datetime
 
-import aiofiles
+import logging
+
 from google.oauth2.service_account import Credentials
 from gspread_asyncio import AsyncioGspreadClientManager
 
@@ -33,7 +30,6 @@ class SheetGoogle:
         self.admin_sheet_name = config['admin_sheet_name']
         self.addition_sheet_name = config['addition_sheet_name']
         self.addition_begin_column = config['addition_begin_column']
-        self.__today_date = datetime.now()
 
     async def __authorize(self, table_id):
         """
@@ -96,38 +92,13 @@ class SheetGoogle:
 
     async def google_sheet_unloading_support_rows(self):
         """
-        Extracts all rows from Google table with support staff by skill and converts to a json file
+        Extracts all rows from Google table
         """
         try:
             ss = await self.__authorize(self.table_id)
-
             selected_sheet = await ss.get_worksheet(0)
-            s = await selected_sheet.get_all_values()
-
-            async with aiofiles.open('google_table/work.json', "r",
-                                     encoding="UTF8") as file:  # открываем json файл с навыками всех КК
-                json_dump = await file.read()
-                json_read = json.loads(json_dump)
-
-            for value in s:
-                status = value[0]  # support status
-                date = value[1]  # ticket evaluation date
-                skill = value[6]  # offload skill
-                open_tickets_count = value[10]  # number of unchecked tickets
-                is_valid_status = (status == "" or status == "НЕ ДЕКРЕТ")  # checking the "Status" field
-                is_valid_date = (re.match('\d{2}\.\d{2}\.\d{4}', date)  # Check the "Start date of evaluation" field
-                                 and self.__today_date > datetime.strptime(date, "%d.%m.%Y"))
-                is_not_date = (date == "-" or date == "")  # If there's no date
-                skill_present = skill in json_read  # Checking that the skill is in the filter
-                is_valid_open_tickets = (open_tickets_count != '0'  # Checking the number of tickets
-                                         and open_tickets_count.isdigit())
-
-                if skill_present and is_valid_status and is_valid_open_tickets:
-                    if is_not_date or is_valid_date:
-                        json_read[skill].append(value[0:11])
-            async with aiofiles.open('google_table/unloading.json', "w", encoding="UTF8") as file:
-                await file.write(json.dumps(json_read, indent=4, ensure_ascii=False))
-
+            rows = await selected_sheet.get("A:K")
+            return rows
         except Exception as e:
             logging.error('An error occurred during google_sheet_unloading_support_rows method execution: %s', e)
             raise e
