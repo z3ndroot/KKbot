@@ -5,6 +5,9 @@ import os
 
 import aiofiles
 import aiosqlite
+from pydantic import ValidationError
+
+from validators import Support
 
 
 class Admin:
@@ -22,12 +25,17 @@ class Admin:
                 async with aiosqlite.connect(self.db) as db:
                     await db.execute('''
                             CREATE TABLE admin
-                            (login text, id text)
+                            (login text, id text PRIMARY KEY)
                             ''')
                     await db.execute('''
                             CREATE TABLE user
-                            (login text, id text, skill text, num int)
+                            (login text, id text PRIMARY KEY, skill text, num int)
                             ''')
+                    await db.execute('''
+                            CREATE TABLE task
+                            (status text, date text, login text, link text, comment text, 
+                            skillsup text, skill text, output text, appreciated int, autochecks int, residue int)
+                    ''')
                     await db.commit()
         except Exception as e:
             logging.error('An error occurred during create_database method execution: %s', e)
@@ -52,6 +60,40 @@ class Admin:
             logging.error('An error occurred during check_access method execution: %s', e)
             raise e
 
+    async def unloading(self, rows):
+        """
+        Validation and writing of rows to the database
+        :param rows: upload lines
+        :return:
+        """
+        async with aiosqlite.connect(self.db) as cursor:
+            await cursor.execute("DELETE from task")
+            await cursor.commit()
+            for row in rows:
+                if len(row) == 11:
+                    try:
+                        support = Support(
+                            status=row[0],
+                            date=row[1],
+                            login=row[2],
+                            link=row[3],
+                            comment=row[4],
+                            skillsup=row[5],
+                            skill=row[6],
+                            output=row[7],
+                            appreciated=row[8],
+                            autochecks=row[9],
+                            residue=row[10],
+
+                        )
+                    except (ValueError, ValidationError):
+                        continue
+                    await cursor.execute("""
+                        INSERT INTO task
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (tuple(support.model_dump().values())))
+
+                await cursor.commit()
 
     async def skills_update(self, list_user):
         """
