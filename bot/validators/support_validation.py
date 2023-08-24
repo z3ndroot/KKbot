@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 
-class Support(BaseModel):
+class SupportCreate(BaseModel):
     """
     Validation of row supports
     """

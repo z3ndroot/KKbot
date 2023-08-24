@@ -1,3 +1,3 @@
-from .support import Support
+from .support_validation import SupportCreate
 
-__all__ = ['Support']
+__all__ = ['SupportCreate']

@@ -8,7 +8,7 @@ import aiosqlite
 from aiosqlite import IntegrityError
 from pydantic import ValidationError
 
-from validators import Support
+from validators import SupportCreate
 
 
 class Admin:
@@ -74,7 +74,7 @@ class Admin:
             for row in rows:
                 if len(row) == 11:
                     try:
-                        support = Support(
+                        support = SupportCreate(
                             status=row[0],
                             date=row[1],
                             login=row[2],
