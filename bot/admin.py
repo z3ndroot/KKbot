@@ -111,16 +111,26 @@ class Admin:
         :return:
         """
         async with aiosqlite.connect(self.db) as cursor:
+            update_priority = ""
             try:
                 for i in list_login:
                     await cursor.execute(f"""
                                 UPDATE task
                                 SET (priority) = (1)
-                                WHERE login == {i}
+                                WHERE login == '{i}'
                     """)
-                await cursor.commit()
+                    await cursor.commit()
+                    cursor_object = await cursor.execute(f"""
+                    SELECT priority FROM task
+                     WHERE login == '{i}'""")
+                    priority_tuple = await cursor_object.fetchone()
+                    priority = '✅' if priority_tuple else '❌'
+                    update_priority += f'{i}:{priority}\n'
+                return update_priority
+
             except Exception as e:
                 logging.error('An error occurred during priority_setting method execution: %s', e)
+                raise e
 
     async def skills_update(self, list_user):
         """
