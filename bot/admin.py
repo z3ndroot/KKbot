@@ -170,6 +170,8 @@ class Admin:
                             """, (user.login, user.id, user.skill, 0))
                     except (ValidationError, ValueError, IndexError):
                         logging.warning(f'There was a problem with {i}')
+                    except IntegrityError:
+                        logging.warning(f"This id: {user.id} is duplicated in the google table.")
                 await cursor.commit()
         except Exception as e:
             logging.error('An error occurred during user_update method execution: %s', e)
