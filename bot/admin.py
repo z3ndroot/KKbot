@@ -74,20 +74,7 @@ class Admin:
             for row in rows:
                 if len(row) == 11:
                     try:
-                        support = SupportCreate(
-                            status=row[0],
-                            date=row[1],
-                            login=row[2],
-                            link=row[3],
-                            comment=row[4],
-                            skillsup=row[5],
-                            skill=row[6],
-                            output=row[7],
-                            appreciated=row[8],
-                            autochecks=row[9],
-                            residue=row[10],
-
-                        )
+                        support = SupportCreate.from_list(row)
                     except (ValueError, ValidationError):
                         continue
                     try:
