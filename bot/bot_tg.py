@@ -81,9 +81,9 @@ class BotTelegram:
         """
         logging.info(f'The /start command from  @{message.from_user.username} '
                      f'(full name: {message.from_user.full_name})')
-        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.admin_buttons)
-        elif await self.db_user.get_name(str(message.from_user.id)):
+        elif await self.db_user.get_name(message.from_user.id):
             await message.reply(f"Привет, {message.from_user.first_name}", reply_markup=self.get_task)
 
     async def get_job(self, message: types.Message, state: FSMContext):
@@ -93,7 +93,7 @@ class BotTelegram:
         logging.info(f"Request for an assignment from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
 
-        name = await self.db_user.get_name(str(message.from_user.id))
+        name = await self.db_user.get_name(message.from_user.id)
         if name:
             task = await self.db_user.get_support_line(message.from_user.id)
             if isinstance(task, tuple):
@@ -208,7 +208,7 @@ class BotTelegram:
         """
         logging.info("Request to change priority from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             await self.bot.send_message(message.from_user.id,
                                         "Отправь мне список логинов в формате:\ntest\ntest2\ntest3")
             await Form.logins.set()
@@ -234,7 +234,7 @@ class BotTelegram:
         """
         logging.info(f"Request to update the list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             user_list = await self.gs.employee_skills_update()
             await self.db_admin.user_update(user_list)
             logging.info(f"Successful update of the User base from @{message.from_user.username} "
@@ -247,7 +247,7 @@ class BotTelegram:
         """
         logging.info(f"Request to update the list skill of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             user_list = await self.gs.employee_skills_update()
             await self.db_admin.skills_update(user_list)
             logging.info(f"Successful update of the User base from @{message.from_user.username} "
@@ -260,7 +260,7 @@ class BotTelegram:
         """
         logging.info(f"Request for a list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
-        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             await self.db_admin.get_user_from_database()
             await self.bot.send_document(message.from_user.id, open('db/user.json', 'rb'))
             logging.info(f"The file user.json has been sent @{message.from_user.username} "
