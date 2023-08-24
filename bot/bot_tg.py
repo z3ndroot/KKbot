@@ -331,32 +331,30 @@ class BotTelegram:
                 except ValueError:
                     await message.reply('Ошибка! Неверный формат даты. Необходимо указать дату в 4 строке.')
 
+    def _reg_handlers(self, dp: Dispatcher):
+        """
+        registration of message handlers
+        """
+        dp.register_message_handler(self.start, commands="start")
+        dp.register_message_handler(self.get_job, text="Получить задание", state=None)
+        dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
+        dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
+        dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
+        dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
+        dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
+        dp.register_message_handler(self.user_update, text="Обновить аудиторов")
+        dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
+        dp.register_message_handler(self.user_info, text='Список аудиторов')
+        dp.register_message_handler(self.admin_update, text='Обновить админов')
+        dp.register_message_handler(self.get_log, text='Логи')
+        dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
+        dp.register_message_handler(self.additional_task, regexp="#доп_задание")
 
-def _reg_handlers(self, dp: Dispatcher):
-    """
-    registration of message handlers
-    """
-    dp.register_message_handler(self.start, commands="start")
-    dp.register_message_handler(self.get_job, text="Получить задание", state=None)
-    dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
-    dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
-    dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
-    dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
-    dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
-    dp.register_message_handler(self.user_update, text="Обновить аудиторов")
-    dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
-    dp.register_message_handler(self.user_info, text='Список аудиторов')
-    dp.register_message_handler(self.admin_update, text='Обновить админов')
-    dp.register_message_handler(self.get_log, text='Логи')
-    dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
-    dp.register_message_handler(self.additional_task, regexp="#доп_задание")
-
-
-def run(self):
-    """
-    bot startup
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    self._reg_handlers(self.dp)
-    executor.start_polling(self.dp, skip_updates=True, on_startup=self.on_startup, loop=loop)
+    def run(self):
+        """
+        bot startup
+        """
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        self._reg_handlers(self.dp)
+        executor.start_polling(self.dp, skip_updates=True, on_startup=self.on_startup, loop=loop)
