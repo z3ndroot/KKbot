@@ -18,8 +18,10 @@ class User:
                                 WHERE id== {id_telegram}
             """)
             result = await cursor_object.fetchone()
+            list_support = result[0].split(',')
+            list_support = [i.strip() for i in list_support]
             if result:
-                return result[0].split(', ')
+                return list_support
             else:
                 logging.warning('User %s was not found and no active skills', id_telegram)
 
