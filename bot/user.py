@@ -56,13 +56,15 @@ class User:
                 ORDER BY priority DESC, residue DESC LIMIT 1;
             """)
             result = await cursor_object.fetchone()
+            if not result:
+                return f"Нет активных задач по навыку {skill}("
             await cursor.execute(f"""
                             DELETE FROM task
                             WHERE login == '{result[2]}'
             """)
             await cursor.commit()
 
-        return result
+            return result
 
     async def output_skill_counter(self, id_telegram):
         """
