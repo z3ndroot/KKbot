@@ -42,6 +42,28 @@ class User:
             logging.error('An error occurred during get_name method execution: %s', e)
             raise e
 
+    async def get_support_line(self, id_telegram):
+        """
+        Get a skill task
+        :param id_telegram: user id telegram
+        :return:
+        """
+        skill = await self.output_skill_counter(id_telegram)
+        async with aiosqlite.connect(self.db) as cursor:
+            cursor_object = await cursor.execute(f"""
+                SELECT * FROM task 
+                WHERE skill='{skill}' 
+                ORDER BY priority DESC, residue DESC LIMIT 1;
+            """)
+            result = await cursor_object.fetchone()
+            await cursor.execute(f"""
+                            DELETE FROM task
+                            WHERE login == '{result[2]}'
+            """)
+            await cursor.commit()
+
+        return result
+
     async def output_skill_counter(self, id_telegram):
         """
         The method gets a counter from the database and checks it by condition, incrementing or zeroing it.
@@ -76,5 +98,3 @@ class User:
         except Exception as e:
             logging.error('An error occurred during output_skill_counter method execution: %s', e)
             raise e
-
-
