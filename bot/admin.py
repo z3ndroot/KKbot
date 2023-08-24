@@ -5,6 +5,7 @@ import os
 
 import aiofiles
 import aiosqlite
+from aiosqlite import IntegrityError
 from pydantic import ValidationError
 
 from validators import Support
@@ -33,8 +34,9 @@ class Admin:
                             ''')
                     await db.execute('''
                             CREATE TABLE task
-                            (status text, date text, login text, link text, comment text, 
-                            skillsup text, skill text, output text, appreciated int, autochecks int, residue int)
+                            (status text, date text, login text PRIMARY KEY, link text, comment text, 
+                            skillsup text, skill text, output text, appreciated int, autochecks int, 
+                            residue int, priority int DEFAULT 0)
                     ''')
                     await db.commit()
         except Exception as e:
@@ -88,10 +90,17 @@ class Admin:
                         )
                     except (ValueError, ValidationError):
                         continue
-                    await cursor.execute("""
-                        INSERT INTO task
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (tuple(support.model_dump().values())))
+                    try:
+                        await cursor.execute("""
+                            INSERT INTO task (status, date, login,
+                             link, comment, skillsup, skill, output, 
+                             appreciated, autochecks, residue)
+                            VALUES (:status, :date, :login,
+                             :link, :comment, :skillsup, :skill, :output, 
+                             :appreciated, :autochecks, :residue)
+                        """, support.model_dump())
+                    except IntegrityError:
+                        logging.warning(f"This login: {support.login} is duplicated in the support table.")
 
                 await cursor.commit()
 
