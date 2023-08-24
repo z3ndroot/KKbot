@@ -30,7 +30,7 @@ class Admin:
                             ''')
                     await db.execute('''
                             CREATE TABLE user
-                            (login text, id text PRIMARY KEY, skill text, num int)
+                            (login text, id int PRIMARY KEY, skill text, num int)
                             ''')
                     await db.execute('''
                             CREATE TABLE task
@@ -72,24 +72,23 @@ class Admin:
             await cursor.execute("DELETE from task")
             await cursor.commit()
             for row in rows:
-                if len(row) == 11:
-                    try:
-                        support = SupportCreate.from_list(row)
-                    except (ValueError, ValidationError):
-                        continue
-                    try:
-                        await cursor.execute("""
-                            INSERT INTO task (status, date, login,
-                             link, comment, skillsup, skill, output, 
-                             appreciated, autochecks, residue)
-                            VALUES (:status, :date, :login,
-                             :link, :comment, :skillsup, :skill, :output, 
-                             :appreciated, :autochecks, :residue)
-                        """, support.model_dump())
-                    except IntegrityError:
-                        logging.warning(f"This login: {support.login} is duplicated in the support table.")
+                try:
+                    support = SupportCreate.from_list(row)
+                except (ValueError, ValidationError, IndexError):
+                    continue
+                try:
+                    await cursor.execute("""
+                        INSERT INTO task (status, date, login,
+                         link, comment, skillsup, skill, output, 
+                         appreciated, autochecks, residue)
+                        VALUES (:status, :date, :login,
+                         :link, :comment, :skillsup, :skill, :output, 
+                         :appreciated, :autochecks, :residue)
+                    """, support.model_dump())
+                except IntegrityError:
+                    logging.warning(f"This login: {support.login} is duplicated in the support table.")
 
-                await cursor.commit()
+            await cursor.commit()
 
     async def priority_setting(self, list_login):
         """
@@ -162,12 +161,15 @@ class Admin:
                 await cursor.commit()
 
                 for i in list_user:
-                    if i not in user_from_database:  # add new users
-                        await cursor.execute(f"""
-                                        INSERT INTO user
-                                        VALUES ('{i[0]}','{i[1]}','{i[2]}','0')
-                                           
-                        """)
+                    try:
+                        user = UserCreate.from_list(i)
+                        if i not in user_from_database:  # add new users
+                            await cursor.execute("""
+                                            INSERT INTO user
+                                            VALUES (?,?,?,?)
+                            """, (user.login, user.id, user.skill, 0))
+                    except (ValidationError, ValueError, IndexError) as e:
+                        logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
             logging.error('An error occurred during user_update method execution: %s', e)
