@@ -331,6 +331,13 @@ class BotTelegram:
                 except ValueError:
                     await message.reply('Ошибка! Неверный формат даты. Необходимо указать дату в 4 строке.')
 
+    async def error_handler(self, update: types.Update, exception):
+        """
+        Error handler in the aiogram library
+        """
+        logging.error(f'Caused by the update error: {exception}')
+        return True
+
     def _reg_handlers(self, dp: Dispatcher):
         """
         registration of message handlers
@@ -349,6 +356,7 @@ class BotTelegram:
         dp.register_message_handler(self.get_log, text='Логи')
         dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
         dp.register_message_handler(self.additional_task, regexp="#доп_задание")
+        dp.register_errors_handler(self.error_handler)
 
     def run(self):
         """
