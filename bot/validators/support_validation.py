@@ -43,3 +43,34 @@ class SupportCreate(BaseModel):
         if v == 0:
             raise ValueError(f'Incorrect residue: {v}')
         return v
+
+    @classmethod
+    def from_list(cls, data: list):
+        if len(data) != 11:
+            raise IndexError('List should contain 3 values')
+
+        status = data[0]
+        date = data[1]
+        login = data[2]
+        link = data[3]
+        comment = data[4]
+        skillsup = data[5]
+        skill = data[6]
+        output = data[7]
+        appreciated = data[8]
+        autochecks = data[9]
+        residue = data[10]
+
+        return cls(
+            status=status,
+            data=date,
+            login=login,
+            link=link,
+            comment=comment,
+            skillsup=skillsup,
+            skill=skill,
+            output=output,
+            appreciated=appreciated,
+            autochecks=autochecks,
+            residue=residue
+        )
