@@ -27,7 +27,7 @@ def main():
     load_dotenv()
 
     # Check missing folders
-    folders = ['db', 'google_table', 'log']
+    folders = ['db', 'log']
     missing_folder = check_folders(folders)
 
     # Setup logging
