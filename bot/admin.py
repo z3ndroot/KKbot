@@ -8,7 +8,7 @@ import aiosqlite
 from aiosqlite import IntegrityError
 from pydantic import ValidationError
 
-from validators import SupportCreate, UserCreate
+from validators import SupportCreate, UserCreate, AdminCreate
 
 
 class Admin:
@@ -26,7 +26,7 @@ class Admin:
                 async with aiosqlite.connect(self.db) as db:
                     await db.execute('''
                             CREATE TABLE admin
-                            (login text, id text PRIMARY KEY)
+                            (login text, id int PRIMARY KEY)
                             ''')
                     await db.execute('''
                             CREATE TABLE user
@@ -134,7 +134,7 @@ class Admin:
                                         SET (skill) = ('{user.skill}')
                                         where id == {user.id} 
                         """)
-                    except (ValidationError, ValueError, IndexError) as e:
+                    except (ValidationError, ValueError, IndexError):
                         logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
@@ -168,7 +168,7 @@ class Admin:
                                             INSERT INTO user
                                             VALUES (?,?,?,?)
                             """, (user.login, user.id, user.skill, 0))
-                    except (ValidationError, ValueError, IndexError) as e:
+                    except (ValidationError, ValueError, IndexError):
                         logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
@@ -213,11 +213,15 @@ class Admin:
                 await cursor.commit()
 
                 for i in list_admin:
-                    if i not in admin_from_database:  # add new admin
-                        await cursor.execute(f"""
-                                        INSERT INTO admin
-                                        VALUES ('{i[0]}','{i[1]}')
-                        """)
+                    try:
+                        admin = AdminCreate.from_list(i)
+                        if i not in admin_from_database:  # add new admin
+                            await cursor.execute("""
+                                            INSERT INTO admin
+                                            VALUES (?,?)
+                            """, (admin.login, admin.id))
+                    except (ValidationError, ValueError, IndexError):
+                        logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
             logging.error('An error occurred during admin_update method execution: %s', e)
