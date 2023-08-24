@@ -126,7 +126,7 @@ class SheetGoogle:
         try:
             ss = await self.__authorize(self.table_id)
             selected_sheet = await ss.worksheet(self.admin_sheet_name)
-            result = await selected_sheet.get_all_values()
+            result = await selected_sheet.get("A:B")
 
             return result
         except Exception as e:
