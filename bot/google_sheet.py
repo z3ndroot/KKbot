@@ -111,8 +111,7 @@ class SheetGoogle:
         try:
             ss = await self.__authorize(self.table_id)
             selected_sheet = await ss.worksheet(self.user_sheet_name)
-            result = await selected_sheet.get_all_values()
-            result = [i[0:3] for i in result]
+            result = await selected_sheet.get("A:C")
 
             return result
         except Exception as e:
