@@ -28,6 +28,7 @@ class Form(StatesGroup):
     number_tickets = State()
     comment = State()
     file = State()
+    logins = State()
 
 
 class BotTelegram:
@@ -62,6 +63,7 @@ class BotTelegram:
             KeyboardButton('Обновить админов'),
             KeyboardButton('Обновить аудиторов'),
             KeyboardButton('Список аудиторов'),
+            KeyboardButton('Приоритет'),
             KeyboardButton('Выгрузка'),
             KeyboardButton('Логи'),
         ]
@@ -72,7 +74,7 @@ class BotTelegram:
         self.admin_buttons = ReplyKeyboardMarkup(resize_keyboard=True)
         self.admin_buttons.add(self.admin_button[0]).insert(self.admin_button[1])
         self.admin_buttons.add(self.admin_button[2]).insert(self.admin_button[3])
-        self.admin_buttons.add(self.admin_button[4]).add(self.admin_button[5])
+        self.admin_buttons.add(self.admin_button[4]).add(self.admin_button[5]).add(self.admin_button[6])
 
     async def start(self, message: types.Message):
         """
@@ -199,6 +201,34 @@ class BotTelegram:
             await time_mess.delete()
             await message.reply("Выгрузка обновлена✅")
 
+    async def priority_task(self, message: types.Message):
+        """
+        Method for updating the priority
+        :param message:
+        :return:
+        """
+        logging.info("Request to change priority from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+        if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(str(message.from_user.id)):
+            await self.bot.send_message(message.from_user.id,
+                                        "Отправь мне список логинов в формате:\ntest\ntest2\ntest3")
+            await Form.logins.set()
+
+    async def get_login_support(self, message: types.Message, state: FSMContext):
+        """
+        Method for obtaining logins
+        :param message:
+        :param state:
+        :return:
+        """
+        text = message.text
+        list_login = text.split('\n')
+        result = await self.db_admin.priority_setting(list_login)
+        await state.finish()
+        await message.reply(f'Результаты обновления приоритета:\n{result}')
+        logging.info("Successful priority change from @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
+
     async def user_update(self, message: types.Message):
         """
         Method for updating the User table
@@ -310,6 +340,8 @@ class BotTelegram:
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
         dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
         dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
+        dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
+        dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
         dp.register_message_handler(self.user_update, text="Обновить аудиторов")
         dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
         dp.register_message_handler(self.user_info, text='Список аудиторов')
