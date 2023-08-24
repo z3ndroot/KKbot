@@ -22,7 +22,7 @@ class TaskCreate(BaseModel):
     @classmethod
     def from_list(cls, data: list):
         if len(data) != 5:
-            raise ValueError('List should contain 3 values')
+            raise IndexError('List should contain 3 values')
 
         tag = data[0]
         login = data[1]
