@@ -8,7 +8,7 @@ import aiosqlite
 from aiosqlite import IntegrityError
 from pydantic import ValidationError
 
-from validators import SupportCreate
+from validators import SupportCreate, UserCreate
 
 
 class Admin:
@@ -127,17 +127,16 @@ class Admin:
         """
         try:
             async with aiosqlite.connect(self.db) as cursor:
-                result = await cursor.execute_fetchall("""
-                                                    SELECT * from user
-                """)
-                user_from_database = [list(i[0:3]) for i in result]
                 for i in list_user:
-                    if i not in user_from_database:  # update skills
+                    try:
+                        user = UserCreate.from_list(i)
                         await cursor.execute(f"""
                                         UPDATE user
-                                        SET (skill) = ('{i[2]}')
-                                        where id == {i[1]} 
+                                        SET (skill) = ('{user.skill}')
+                                        where id == {user.id} 
                         """)
+                    except (ValidationError, ValueError, IndexError) as e:
+                        logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
             logging.error('An error occurred during output_skill_counter method execution: %s', e)
