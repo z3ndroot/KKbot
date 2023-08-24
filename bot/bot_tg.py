@@ -1,11 +1,8 @@
 import asyncio
-import json
 import logging
-import re
 import time
 from datetime import date
 
-import aiofiles
 from aiogram import Bot
 from aiogram import types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -15,10 +12,12 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils import executor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from pydantic import ValidationError
 
 from admin import Admin
 from google_sheet import SheetGoogle
 from user import User
+from validators import TaskCreate
 
 
 class Form(StatesGroup):
@@ -316,45 +315,48 @@ class BotTelegram:
                              f"(full name: {message.from_user.full_name})")
                 text_chunks = message.text.split('\n')
                 text_chunks = [i.strip() for i in text_chunks]
-                if len(text_chunks) == 5:
-                    login = text_chunks[1]
-                    task = text_chunks[2]
-                    date_task = text_chunks[3] if bool(re.match(r'^\d{2}\.\d{2}\.\d{4}$',
-                                                                text_chunks[3])) else False
-                    quantity = text_chunks[4]
-                    if date_task:
-                        await self.gs.addition_task_entry(login, task, date_task, quantity)
-                        logging.info(f"The task is recorded in a google doc for @{message.from_user.username} "
-                                     f"(full name: {message.from_user.full_name})")
-                    else:
-                        await message.reply('Ошибка! Неверный формат даты. Необходимо указать дату в 4 строке.')
-                else:
+                try:
+                    task = TaskCreate.from_list(text_chunks)
+                    check_task = task.model_dump()
+                    await self.gs.addition_task_entry(
+                        check_task['login'],
+                        check_task['task'],
+                        check_task['date'],
+                        check_task['quantity']
+                    )
+                    logging.info(f"The task is recorded in a google doc for @{message.from_user.username} "
+                                 f"(full name: {message.from_user.full_name})")
+                except (ValidationError, IndexError):
                     await message.reply('Ошибка! Отчет не соответствует требованиям')
+                except ValueError:
+                    await message.reply('Ошибка! Неверный формат даты. Необходимо указать дату в 4 строке.')
 
-    def _reg_handlers(self, dp: Dispatcher):
-        """
-        registration of message handlers
-        """
-        dp.register_message_handler(self.start, commands="start")
-        dp.register_message_handler(self.get_job, text="Получить задание", state=None)
-        dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
-        dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
-        dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
-        dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
-        dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
-        dp.register_message_handler(self.user_update, text="Обновить аудиторов")
-        dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
-        dp.register_message_handler(self.user_info, text='Список аудиторов')
-        dp.register_message_handler(self.admin_update, text='Обновить админов')
-        dp.register_message_handler(self.get_log, text='Логи')
-        dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
-        dp.register_message_handler(self.additional_task, regexp="#доп_задание")
 
-    def run(self):
-        """
-        bot startup
-        """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        self._reg_handlers(self.dp)
-        executor.start_polling(self.dp, skip_updates=True, on_startup=self.on_startup, loop=loop)
+def _reg_handlers(self, dp: Dispatcher):
+    """
+    registration of message handlers
+    """
+    dp.register_message_handler(self.start, commands="start")
+    dp.register_message_handler(self.get_job, text="Получить задание", state=None)
+    dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
+    dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
+    dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
+    dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
+    dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
+    dp.register_message_handler(self.user_update, text="Обновить аудиторов")
+    dp.register_message_handler(self.user_skill_update, text='Обновить навыки')
+    dp.register_message_handler(self.user_info, text='Список аудиторов')
+    dp.register_message_handler(self.admin_update, text='Обновить админов')
+    dp.register_message_handler(self.get_log, text='Логи')
+    dp.register_message_handler(self.forward_feedback, content_types=('video', 'document', 'audio'))
+    dp.register_message_handler(self.additional_task, regexp="#доп_задание")
+
+
+def run(self):
+    """
+    bot startup
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    self._reg_handlers(self.dp)
+    executor.start_polling(self.dp, skip_updates=True, on_startup=self.on_startup, loop=loop)
