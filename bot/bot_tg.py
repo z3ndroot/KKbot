@@ -94,9 +94,8 @@ class BotTelegram:
 
         name = await self.db_user.get_name(str(message.from_user.id))
         if name:
-            skill = await self.db_user.output_skill_counter(str(message.from_user.id))
-            task = await self.distributor(skill)
-            if isinstance(task, list):
+            task = await self.db_user.get_support_line(message.from_user.id)
+            if isinstance(task, tuple):
                 time_now = date.today()
                 finished_form = (f"Статус : {task[0]}\n"
                                  f"Дата начала оценки : {task[1]}\n"
@@ -173,28 +172,6 @@ class BotTelegram:
         await time_mess.delete()
         await state.finish()
         await message.reply("Комментарий записан✅", reply_markup=self.get_task)
-
-    @staticmethod
-    async def distributor(skill):
-        """
-        Static method for skill allocation
-        :param skill: User skill
-        """
-        async with aiofiles.open("google_table/unloading.json", 'r', encoding="UTF8") as file:
-            file_content = await file.read()
-            templates = json.loads(file_content)
-        task_support = templates.get(skill, "Нет навыка")
-        if not task_support:
-            return f"Нет активных задач по навыку {skill}("
-        if task_support != 'Нет навыка':
-            support_kk = max(task_support, key=lambda sort_sup: int(sort_sup[10]))
-            task_support.remove(support_kk)
-            templates[skill] = task_support
-            async with aiofiles.open("google_table/unloading.json", "w", encoding="UTF8") as file:
-                await file.write(json.dumps(templates, indent=4, ensure_ascii=False))
-            return support_kk
-        else:
-            return f"Проблемы с навыком {skill}, обратись к рг("
 
     async def __update_support_rows_for_database(self):
         """
