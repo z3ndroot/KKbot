@@ -47,7 +47,7 @@ class SupportCreate(BaseModel):
     @classmethod
     def from_list(cls, data: list):
         if len(data) != 11:
-            raise IndexError('List should contain 3 values')
+            raise IndexError('List should contain 11 values')
 
         status = data[0]
         date = data[1]
@@ -63,7 +63,7 @@ class SupportCreate(BaseModel):
 
         return cls(
             status=status,
-            data=date,
+            date=date,
             login=login,
             link=link,
             comment=comment,
