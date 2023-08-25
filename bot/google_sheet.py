@@ -1,4 +1,3 @@
-
 import logging
 
 from google.oauth2.service_account import Credentials
@@ -132,3 +131,25 @@ class SheetGoogle:
         except Exception as e:
             logging.error('An error occurred during administrator_list_update method execution: %s', e)
             raise e
+
+    async def change_number_tickets(self, support_login, telegram_id, value):
+        """
+        Makes changes to already recorded tasks
+        :param support_login: support login from the message
+        :param value: ticket quantity
+        :param telegram_id: user id telegram
+        :return:
+        """
+        try:
+            ss = await self.__authorize(self.table_id)
+            selected_sheet = await ss.worksheet(self.task_sheet_name)
+            cell_list = await selected_sheet.findall(f'{support_login}')
+            cell = cell_list[-1]
+            get_user_id = await selected_sheet.cell(cell.row, cell.col + 3)
+            if get_user_id.value != telegram_id:
+                return 'Not found'
+            await selected_sheet.update_cell(cell.row, cell.col + 4, value)
+            return 'Successful'
+        except Exception as e:
+            logging.error('An error occurred during change_number_tickets method execution: %s', e)
+            return 'Error'
