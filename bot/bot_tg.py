@@ -9,7 +9,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import (KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove,
+                           InlineKeyboardMarkup, InlineKeyboardButton)
 from aiogram.utils import executor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pydantic import ValidationError
@@ -28,6 +29,7 @@ class Form(StatesGroup):
     comment = State()
     file = State()
     logins = State()
+    fix_numer_tickets = State()
 
 
 class BotTelegram:
@@ -66,6 +68,12 @@ class BotTelegram:
             KeyboardButton('Выгрузка'),
             KeyboardButton('Логи'),
         ]
+        self.button_cancel = KeyboardButton('Отмена')
+        self.button_change = InlineKeyboardButton(text='Изменить', callback_data='change')
+        self.inline_button = InlineKeyboardMarkup(row_width=4)
+        self.inline_button.add(self.button_change)
+        self.cancel = ReplyKeyboardMarkup(resize_keyboard=True)
+        self.cancel.add(self.button_cancel)
         self.buttons_comment = ReplyKeyboardMarkup(resize_keyboard=True)
         self.buttons_comment.add(*self.button_comment)
         self.get_task = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -118,7 +126,8 @@ class BotTelegram:
                     'timer': time.time(),
                     'comment': '',
                 }
-                await self.bot.send_message(message.from_user.id, text=finished_form, parse_mode='HTML')
+                await self.bot.send_message(message.from_user.id, text=finished_form, parse_mode='HTML',
+                                            reply_markup=self.inline_button)
                 logging.info(f"Task successfully completed {task[2]} for @{message.from_user.username} "
                              f"(full name: {message.from_user.full_name})")
                 await Form.number_tickets.set()
@@ -173,6 +182,65 @@ class BotTelegram:
         await time_mess.delete()
         await state.finish()
         await message.reply("Комментарий записан✅", reply_markup=self.get_task)
+
+    async def change_record_task(self, callback: types.CallbackQuery, state: FSMContext):
+        """
+        Corrects the number of tickets already recorded
+        """
+        logging.info(f"Request to change the number of tickets for correction from @{callback.from_user.username} "
+                     f"(full name: {callback.from_user.full_name})")
+        name = await self.db_user.get_name(callback.from_user.id)
+        if name:
+            data_message = callback.message.date
+            if data_message.date() == date.today():
+                message = callback.message.text
+                list_task = message.split("\n")
+                login = list_task[2].replace('Логин : ', '')
+                await Form.fix_numer_tickets.set()
+                async with state.proxy() as data:
+                    data['login'] = login
+                await self.bot.send_message(callback.from_user.id, 'Ведите кол-во тикетов для исправления:',
+                                            reply_markup=self.cancel)
+                await callback.answer('🖊')
+            else:
+                await self.bot.send_message(callback.from_user.id, 'Задача устарела. Обратись к РГ для исправления👨🏾‍🦳',
+                                            reply_markup=self.get_task)
+
+    async def number_of_tickets_fixed(self, message: types.Message, state: FSMContext):
+        """
+        Requesting the number of tickets to be fixed
+        """
+        value = message.text
+        if value.isdigit():
+            time_message = await self.bot.send_message(message.from_user.id, 'Вычисляю...🤖')
+            async with state.proxy() as data:
+                login: dict = data['login']
+            result = await self.gs.change_number_tickets(login, str(message.from_user.id), value)
+            await time_message.delete()
+            match result:
+                case 'Not found':
+                    logging.info(f"Entry for login not found in table from @{message.from_user.username}"
+                                 f" (full name: {message.from_user.full_name})")
+                    await self.bot.send_message(message.from_user.id, 'Не удалось найти запись в таблице.'
+                                                                      'Обратитесь к РГ',
+                                                reply_markup=self.get_task)
+                case 'Error':
+                    await self.bot.send_message(message.from_user.id, 'При записи возникла ошибка.'
+                                                                      ' Попробуйте еще раз немного позднее',
+                                                reply_markup=self.get_task)
+                case 'Successful':
+                    logging.info(f"Changes to the task for {login} were successfully made "
+                                 f"from @{message.from_user.username} (full name: {message.from_user.full_name})")
+                    await self.bot.send_message(message.from_user.id, 'Изменения успешно внесены✅',
+                                                reply_markup=self.get_task)
+            await state.finish()
+        elif value == 'Отмена':
+            logging.info(f"Cancellation for amendments from "
+                         f"from @{message.from_user.username} (full name: {message.from_user.full_name})")
+            await self.bot.send_message(message.from_user.id, "Изменения отменены🙅", reply_markup=self.get_task)
+            await state.finish()
+        else:
+            await message.reply("❌Проверьте правильность кол-во тикетов и введите его заново")
 
     async def __update_support_rows_for_database(self):
         """
@@ -346,6 +414,8 @@ class BotTelegram:
         dp.register_message_handler(self.get_job, text="Получить задание", state=None)
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
         dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
+        dp.register_callback_query_handler(self.change_record_task, text='change')
+        dp.register_message_handler(self.number_of_tickets_fixed, state=Form.fix_numer_tickets)
         dp.register_message_handler(self.unloading_from_tables, text='Выгрузка')
         dp.register_message_handler(self.priority_task, text='Приоритет', state=None)
         dp.register_message_handler(self.get_login_support, content_types='text', state=Form.logins)
