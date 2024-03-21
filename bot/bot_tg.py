@@ -19,8 +19,7 @@ from admin import Admin
 from google_sheet import SheetGoogle
 from user import User
 from validators import TaskCreate
-
-
+from storage import SQLiteStorage
 class Form(StatesGroup):
     """
     State machine for data storage
@@ -41,7 +40,7 @@ class BotTelegram:
         :param db_admin: Admin object
         :param db_user: User object
         """
-        self.storage = MemoryStorage()
+        self.storage = SQLiteStorage(config['db'])
         self.scheduler = AsyncIOScheduler()
         self.bot = Bot(token=config["token_bot"])
         self.superusers = config["superusers"].split(",")
@@ -177,10 +176,10 @@ class BotTelegram:
                           'timer': timer,
                           })
         await self.gs.spreadsheet_entry(**data_dict)
-        logging.info(f"Successful ticket skip, comment recorded for @{message.from_user.username} "
-                     f"(full name: {message.from_user.full_name})")
         await time_mess.delete()
         await state.finish()
+        logging.info(f"Successful ticket skip, comment recorded for @{message.from_user.username} "
+                     f"(full name: {message.from_user.full_name})")
         await message.reply("Комментарий записан✅", reply_markup=self.get_task)
 
     async def change_record_task(self, callback: types.CallbackQuery, state: FSMContext):

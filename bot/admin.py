@@ -38,6 +38,18 @@ class Admin:
                             skillsup text, skill text, output text, appreciated int, autochecks int, 
                             residue int, priority int DEFAULT 0)
                     ''')
+                    await db.execute("""CREATE TABLE IF NOT EXISTS "aiogram_state"(
+                                                            "user" BIGINT NOT NULL PRIMARY KEY,
+                                                            "chat" BIGINT NOT NULL,
+                                                            "state" TEXT NOT NULL)""")
+                    await db.execute("""CREATE TABLE IF NOT EXISTS "aiogram_data"(
+                                                        "user" BIGINT NOT NULL PRIMARY KEY,
+                                                        "chat" BIGINT NOT NULL,
+                                                        "data" TEXT)""")
+                    await db.execute("""CREATE TABLE IF NOT EXISTS "aiogram_bucket"(
+                                                        "user" BIGINT NOT NULL PRIMARY KEY,
+                                                        "chat" BIGINT NOT NULL,
+                                                        "bucket" TEXT NOT NULL)""")
                     await db.commit()
         except Exception as e:
             logging.error('An error occurred during create_database method execution: %s', e)
