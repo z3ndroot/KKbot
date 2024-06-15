@@ -7,7 +7,7 @@ import google_sheet
 from user import User
 from admin import Admin
 from bot_tg import BotTelegram
-
+from localized import Localized
 
 def check_folders(folders: list):
     """
@@ -58,7 +58,8 @@ def main():
     gs = google_sheet.SheetGoogle(sheet_config)
     db_admin = Admin(db_config)
     db_user = User(db_config)
-    bot_tg = BotTelegram(bot_config, gs, db_admin, db_user)
+    localized = Localized()
+    bot_tg = BotTelegram(bot_config, gs, db_admin, db_user, localized)
     bot_tg.run()
 
 
