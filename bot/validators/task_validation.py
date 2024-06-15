@@ -15,8 +15,16 @@ class TaskCreate(BaseModel):
     @field_validator("date")
     @classmethod
     def date_check(cls, v: str):
-        if not datetime.strptime(v, '%d.%m.%Y'):
-            raise ValueError(f'Date does not match the format: {v}')
+        try:
+            # First try parsing as '%d.%m.%Y'
+            datetime.strptime(v, '%d.%m.%Y')
+        except ValueError:
+            try:
+                # If that fails, try parsing as '%Y-%m-%d'
+                datetime.strptime(v, '%Y-%m-%d')
+            except ValueError:
+                raise ValueError(f'Date does not match the format: {v}. '
+                                 'Please use either "dd.mm.yyyy" or "yyyy-mm-dd" format.')
         return v
 
     @classmethod
