@@ -44,6 +44,26 @@ class User:
             logging.error('An error occurred during get_name method execution: %s', e)
             raise e
 
+    async def get_localized(self, id_telegram):
+        """
+        Method for obtaining username and also access verification
+        :param id_telegram: user id telegram
+        :return: username
+        """
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                cursor_object = await cursor.execute(f"""
+                                    select lang from localized
+                                    where id == {id_telegram}
+                """)
+                result = await cursor_object.fetchone()
+                if result:
+                    return result[0]
+                return "ru"
+        except Exception as e:
+            logging.error('An error occurred during get_name method execution: %s', e)
+            raise e
+
     async def get_support_line(self, id_telegram):
         """
         Get a skill task
