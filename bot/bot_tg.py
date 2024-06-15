@@ -6,7 +6,7 @@ from datetime import date
 from aiogram import Bot
 from aiogram import types
 
-from aiogram.utils.exceptions import ChatNotFound
+from aiogram.utils.exceptions import ChatNotFound, BotBlocked
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -161,13 +161,14 @@ class BotTelegram:
         """
         Method for send message users
         """
+        await sleep(10)
         if str(message.from_user.id) in self.superusers:
             notify = message.text.replace("/message", '')
             users = await self.db_admin.get_id_from_database()
             for i in users:
                 try:
                     await self.bot.send_message(*i, notify)
-                except ChatNotFound:
+                except (ChatNotFound, BotBlocked):
                     continue
                 finally:
                     await sleep(1)
