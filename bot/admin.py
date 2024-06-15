@@ -221,6 +221,20 @@ class Admin:
             logging.error('An error occurred during get_user_from_database method execution: %s', e)
             raise e
 
+    async def get_id_from_database(self):
+        """
+        Uploads all users to a separate json file
+        :return:
+        """
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                users = await cursor.execute_fetchall("""
+                                        SELECT id from user
+                            """)
+                return users
+        except Exception as e:
+            logging.error('An error occurred during get_user_from_database method execution: %s', e)
+            raise e
     async def admin_update(self, list_admin):
         """
         Compares lists of admin, removes from the database if no admin is found or adds.

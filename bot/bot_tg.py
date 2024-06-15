@@ -6,6 +6,7 @@ from datetime import date
 from aiogram import Bot
 from aiogram import types
 
+from aiogram.utils.exceptions import ChatNotFound
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -20,6 +21,7 @@ from user import User
 from validators import TaskCreate
 from storage import SQLiteStorage
 from localized import Localized
+from asyncio import sleep
 
 
 class Form(StatesGroup):
@@ -154,6 +156,21 @@ class BotTelegram:
                     data['data_dict'] = data_dict
             else:
                 await self.bot.send_message(message.from_user.id, task)
+
+    async def send_admin_message(self, message: types.Message):
+        """
+        Method for send message users
+        """
+        if str(message.from_user.id) in self.superusers:
+            notify = message.text.replace("/message", '')
+            users = await self.db_admin.get_id_from_database()
+            for i in users:
+                try:
+                    await self.bot.send_message(*i, notify)
+                except ChatNotFound:
+                    continue
+                finally:
+                    await sleep(1)
 
     async def number_of_tickets(self, message: types.Message, state: FSMContext):
         """
@@ -451,6 +468,7 @@ class BotTelegram:
         """
         dp.register_message_handler(self.start, commands="start")
         dp.register_message_handler(self.set_language, commands="switch_language")
+        dp.register_message_handler(self.send_admin_message, commands='message')
         dp.register_message_handler(self.get_job, text=["Получить задание", "Get Task"], state=None)
         dp.register_message_handler(self.number_of_tickets, content_types='text', state=Form.number_tickets)
         dp.register_message_handler(self.comment, content_types='text', state=Form.comment)
