@@ -33,6 +33,10 @@ class Admin:
                             (login text, id int PRIMARY KEY, skill text, num int)
                             ''')
                     await db.execute('''
+                            CREATE TABLE localized
+                            (id int PRIMARY KEY, lang text)
+                            ''')
+                    await db.execute('''
                             CREATE TABLE task
                             (status text, date text, login text PRIMARY KEY, link text, comment text, 
                             skillsup text, skill text, output text, appreciated int, autochecks int, 
@@ -72,6 +76,17 @@ class Admin:
                     return result
         except Exception as e:
             logging.error('An error occurred during check_access method execution: %s', e)
+            raise e
+
+    async def set_user_language(self, id_telegram, language):
+        try:
+            async with aiosqlite.connect(self.db) as cursor:
+                await cursor.execute(
+                    "REPLACE INTO localized (id, lang) VALUES (?, ?)", (id_telegram, language)
+                )
+                await cursor.commit()
+        except Exception as e:
+            logging.error('An error occurred during set_user_language method execution: %s', e)
             raise e
 
     async def unloading(self, rows):
