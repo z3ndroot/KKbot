@@ -161,7 +161,6 @@ class BotTelegram:
         """
         Method for send message users
         """
-        await sleep(10)
         if str(message.from_user.id) in self.superusers:
             notify = message.text.replace("/message", '')
             users = await self.db_admin.get_id_from_database()
