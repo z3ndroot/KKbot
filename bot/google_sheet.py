@@ -29,6 +29,7 @@ class SheetGoogle:
         self.admin_sheet_name = config['admin_sheet_name']
         self.addition_sheet_name = config['addition_sheet_name']
         self.addition_begin_column = config['addition_begin_column']
+        self.head_task = config['head_task']
 
     async def __authorize(self, table_id):
         """
@@ -95,7 +96,7 @@ class SheetGoogle:
         """
         try:
             ss = await self.__authorize(self.table_id)
-            selected_sheet = await ss.get_worksheet(0)
+            selected_sheet = await ss.get_worksheet(self.head_task)
             rows = await selected_sheet.get("A:K")
             return rows
         except Exception as e:

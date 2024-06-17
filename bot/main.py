@@ -9,6 +9,7 @@ from admin import Admin
 from bot_tg import BotTelegram
 from localized import Localized
 
+
 def check_folders(folders: list):
     """
     Creating folders if they are missing
@@ -45,7 +46,8 @@ def main():
                     'user_sheet_name': os.environ['USER_SHEET_NAME'],
                     'admin_sheet_name': os.environ['ADMIN_SHEET_NAME'],
                     'addition_sheet_name': os.environ['ADDITION_SHEET_NAME'],
-                    'addition_begin_column': os.environ['ADDITION_BEGIN_COLUMN']}
+                    'addition_begin_column': os.environ['ADDITION_BEGIN_COLUMN'],
+                    'head_task': os.environ['HEAD_TASK']}
 
     db_config = {'db': os.environ['DB_PATH']}
 
