@@ -96,7 +96,7 @@ class SheetGoogle:
         """
         try:
             ss = await self.__authorize(self.table_id)
-            selected_sheet = await ss.get_worksheet(self.head_task)
+            selected_sheet = await ss.worksheet(self.head_task)
             rows = await selected_sheet.get("A:K")
             return rows
         except Exception as e:
