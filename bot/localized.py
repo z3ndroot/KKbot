@@ -3,6 +3,9 @@ from aiogram.types import (KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRem
 
 
 class Localized:
+    """
+    text
+    """
     def __init__(self):
         self.buttons = {
             'ru': {
