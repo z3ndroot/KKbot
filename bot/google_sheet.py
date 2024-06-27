@@ -68,7 +68,7 @@ class SheetGoogle:
             selected_sheet = await ss.worksheet(self.task_sheet_name)
             await selected_sheet.append_row(values=values, table_range=self.task_begin_column)
         except Exception as e:
-            logging.error('An error occurred during spreadsheet_entry method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def addition_task_entry(self, login, task, date, quantity):
@@ -87,7 +87,7 @@ class SheetGoogle:
             await selected_sheet.append_row(values=[login, task, date, quantity],
                                             table_range=self.addition_begin_column)
         except Exception as e:
-            logging.error('An error occurred during addition_task_entry method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def google_sheet_unloading_support_rows(self):
@@ -100,7 +100,8 @@ class SheetGoogle:
             rows = await selected_sheet.get("A:K")
             return rows
         except Exception as e:
-            logging.error('An error occurred during google_sheet_unloading_support_rows method execution: %s', e)
+            logging.error(
+                f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def employee_skills_update(self):
@@ -115,7 +116,7 @@ class SheetGoogle:
 
             return result
         except Exception as e:
-            logging.error('An error occurred during employee_skills_update method execution: %s', e)
+            f"An error occurred: {e.__class__.__name__} - {e}"
             raise e
 
     async def administrator_list_update(self):
@@ -130,7 +131,8 @@ class SheetGoogle:
 
             return result
         except Exception as e:
-            logging.error('An error occurred during administrator_list_update method execution: %s', e)
+            logging.error(
+                f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def change_number_tickets(self, support_login, telegram_id, value):
@@ -152,5 +154,5 @@ class SheetGoogle:
             await selected_sheet.update_cell(cell.row, cell.col + 4, value)
             return 'Successful'
         except Exception as e:
-            logging.error('An error occurred during change_number_tickets method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             return 'Error'
