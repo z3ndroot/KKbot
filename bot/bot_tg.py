@@ -3,12 +3,9 @@ import logging
 import time
 from datetime import date
 
-from aiogram import Bot
-from aiogram import types
-
+from aiogram import Bot, types
 from aiogram.utils.exceptions import ChatNotFound, BotBlocked
-from aiogram.dispatcher import Dispatcher
-from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from aiogram.utils import executor
@@ -39,10 +36,13 @@ class BotTelegram:
     def __init__(self, config: dict, gs, db_admin, db_user, localized):
         """
         Bot initialization with the given configuration
-        :param config: dictionary with bot configurations
-        :param gs: SheetGoogle object
-        :param db_admin: Admin object
-        :param db_user: User object
+
+        Args:
+            config (dict): Dictionary with bot configurations.
+            gs (SheetGoogle): SheetGoogle object for interacting with Google Sheets.
+            db_admin (Admin): Admin object for database interactions related to admin functionalities.
+            db_user (User): User object for database interactions related to user functionalities.
+            localized (Localized): Localized object for handling localization of messages and buttons.
         """
         self.storage = SQLiteStorage(config['db'])
         self.scheduler = AsyncIOScheduler()
@@ -59,7 +59,6 @@ class BotTelegram:
         self.bot_commands = [
             BotCommand('start', "Запуск бота/Start bot"),
             BotCommand('switch_language', "Сменить язык/Switch language")
-
         ]
 
         self.button_lang_ru = InlineKeyboardButton(text='RU', callback_data='ru')
@@ -69,7 +68,10 @@ class BotTelegram:
 
     async def start(self, message: types.Message):
         """
-        Method of processing the start command
+        Method of processing the start command.
+
+        Args:
+            message (types.Message): The message object containing information about the user and chat.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         logging.info(f'The /start command from  @{message.from_user.username} '
@@ -85,23 +87,47 @@ class BotTelegram:
 
     async def send_commands(self, dp: Dispatcher):
         """
-        Run when the bot starts, sends a set of commands
+        Sends a set of commands when the bot starts.
+
+        Args:
+            dp (Dispatcher): The dispatcher object for registering bot handlers and commands.
         """
         await dp.bot.set_my_commands(self.bot_commands)
 
     async def set_language(self, message: types.Message):
+        """
+        Prompts the user to choose a language by sending a message with an inline keyboard.
+
+        Args:
+            message (types.Message): The message object containing information about the user and chat.
+        """
         await message.answer("Выберите язык / Choose your language:", reply_markup=self.inline_button)
 
     async def switch_language(self, callback: types.CallbackQuery):
+        """
+        Switches the user's language based on their selection from an inline keyboard.
+
+        Args:
+            callback (types.CallbackQuery): The callback query object containing information about the user and their selection.
+
+        Functionality:
+            1. Retrieves the user ID from the callback query.
+            2. Retrieves the selected language from the callback data.
+            3. Updates the user's language preference in the database.
+            4. Sends a confirmation message to the user indicating the language change.
+        """
         user_id = callback.from_user.id
         language = callback.data
         await self.db_admin.set_user_language(user_id, language)
-
         await callback.answer(f"Язык изменен на / Language changed to: {language}")
 
     async def get_job(self, message: types.Message, state: FSMContext):
         """
-        Method for sending a message with information about the support
+        Method for sending a message with information about the support.
+
+        Args:
+            message (types.Message): The message object containing information about the user and chat.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         logging.info(f"Request for an assignment from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -159,7 +185,10 @@ class BotTelegram:
 
     async def send_admin_message(self, message: types.Message):
         """
-        Method for send message users
+        Sends a message to all users from the admin.
+
+        Args:
+            message (types.Message): The message object containing the text to be sent.
         """
         if str(message.from_user.id) in self.superusers:
             notify = message.text.replace("/message", '')
@@ -174,7 +203,11 @@ class BotTelegram:
 
     async def number_of_tickets(self, message: types.Message, state: FSMContext):
         """
-        Method of obtaining the number of evaluated tickets and then recording in google tables
+        Obtains the number of evaluated tickets and records it in Google Sheets.
+
+        Args:
+            message (types.Message): The message object containing the number of tickets.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         if message.text.isdigit():
@@ -205,7 +238,11 @@ class BotTelegram:
 
     async def comment(self, message: types.Message, state: FSMContext):
         """
-         Method for recording a comment if no ticket has been checked
+        Records a comment if no ticket has been checked.
+
+        Args:
+            message (types.Message): The message object containing the comment.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         time_mess = await self.bot.send_message(message.from_user.id, self.localized.get_message("waiting", lang))
@@ -225,7 +262,11 @@ class BotTelegram:
 
     async def change_record_task(self, callback: types.CallbackQuery, state: FSMContext):
         """
-        Corrects the number of tickets already recorded
+        Corrects the number of tickets already recorded.
+
+        Args:
+            callback (types.CallbackQuery): The callback query object containing information about the user and their selection.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         logging.info(f"Request to change the number of tickets for correction from @{callback.from_user.username} "
                      f"(full name: {callback.from_user.full_name})")
@@ -250,7 +291,11 @@ class BotTelegram:
 
     async def number_of_tickets_fixed(self, message: types.Message, state: FSMContext):
         """
-        Requesting the number of tickets to be fixed
+        Requests the number of tickets to be fixed.
+
+        Args:
+            message (types.Message): The message object containing the number of tickets to be fixed.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         value = message.text
@@ -290,8 +335,7 @@ class BotTelegram:
 
     async def __update_support_rows_for_database(self):
         """
-        Updating of the support lines
-        :return:
+        Updates the support lines in the database.
         """
         try:
             rows = await self.gs.google_sheet_unloading_support_rows()
@@ -302,7 +346,10 @@ class BotTelegram:
 
     async def unloading_from_tables(self, message: types.Message):
         """
-        Method for updating the QC upload
+        Updates the QC upload from the Google Sheets.
+
+        Args:
+            message (types.Message): The message object containing the request to unload data.
         """
         logging.info(f"Table unload request from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -318,11 +365,12 @@ class BotTelegram:
 
     async def priority_task(self, message: types.Message):
         """
-        Method for updating the priority
-        :param message:
-        :return:
+        Updates the priority of tasks.
+
+        Args:
+            message (types.Message): The message object containing the request to update task priority.
         """
-        logging.info("Request to change priority from @{message.from_user.username} "
+        logging.info(f"Request to change priority from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
         lang = await self.db_user.get_localized(message.from_user.id)
         if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
@@ -332,10 +380,11 @@ class BotTelegram:
 
     async def get_login_support(self, message: types.Message, state: FSMContext):
         """
-        Method for obtaining logins
-        :param message:
-        :param state:
-        :return:
+        Obtains and updates the priority of user logins.
+
+        Args:
+            message (types.Message): The message object containing the list of logins.
+            state (FSMContext): The state machine context for storing temporary data.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         text = message.text
@@ -343,12 +392,15 @@ class BotTelegram:
         result = await self.db_admin.priority_setting(list_login)
         await state.finish()
         await message.reply(f'{self.localized.get_message("result_prior", lang)}\n{result}')
-        logging.info("Successful priority change from @{message.from_user.username} "
+        logging.info(f"Successful priority change from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
 
     async def user_update(self, message: types.Message):
         """
-        Method for updating the User table
+        Updates the User table.
+
+        Args:
+            message (types.Message): The message object containing the request to update the user table.
         """
         logging.info(f"Request to update the list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -362,7 +414,10 @@ class BotTelegram:
 
     async def user_skill_update(self, message: types.Message):
         """
-        Method for updating skills
+        Updates user skills.
+
+        Args:
+            message (types.Message): The message object containing the request to update user skills.
         """
         logging.info(f"Request to update the list skill of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -376,19 +431,25 @@ class BotTelegram:
 
     async def user_info(self, message: types.Message):
         """
-        Method to get the list of users
+        Retrieves and sends the list of users.
+
+        Args:
+            message (types.Message): The message object containing the request for the user list.
         """
         logging.info(f"Request for a list of users from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
         if str(message.from_user.id) in self.superusers or await self.db_admin.check_access(message.from_user.id):
             await self.db_admin.get_user_from_database()
             await self.bot.send_document(message.from_user.id, open('db/user.json', 'rb'))
-            logging.info(f"The file user.json has been sent @{message.from_user.username} "
+            logging.info(f"The file user.json has been sent to @{message.from_user.username} "
                          f"(full name: {message.from_user.full_name})")
 
     async def admin_update(self, message: types.Message):
         """
-        A method for renewing admins
+        Updates the list of admins.
+
+        Args:
+            message (types.Message): The message object containing the request to update the admin list.
         """
         logging.info(f"Request to update the list of admins from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -402,7 +463,10 @@ class BotTelegram:
 
     async def get_log(self, message: types.Message):
         """
-        Method for unloading the log
+        Retrieves and sends the log file.
+
+        Args:
+            message (types.Message): The message object containing the request to retrieve the log file.
         """
         logging.info(f"Request to unload logs from @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name})")
@@ -411,7 +475,10 @@ class BotTelegram:
 
     async def on_startup(self, dp: Dispatcher):
         """
-        Automatic unloading
+        Automatic unloading on bot startup.
+
+        Args:
+            dp (Dispatcher): The dispatcher object for registering bot handlers and commands.
         """
         await self.send_commands(dp)
         self.scheduler.add_job(self.__update_support_rows_for_database, 'cron', hour=1, minute=0)
@@ -419,7 +486,10 @@ class BotTelegram:
 
     async def forward_feedback(self, message: types.Message):
         """
-        Method for sending feedback
+        Forwards feedback to the feedback chat.
+
+        Args:
+            message (types.Message): The message object containing the feedback.
         """
         logging.info(f"The user @{message.from_user.username} "
                      f"(full name: {message.from_user.full_name}) sent the file")
@@ -430,7 +500,10 @@ class BotTelegram:
 
     async def additional_task(self, message: types.Message):
         """
-        Method of receiving a message about additional tasks and recording them
+        Processes and records additional tasks.
+
+        Args:
+            message (types.Message): The message object containing the additional task details.
         """
         lang = await self.db_user.get_localized(message.from_user.id)
         if str(message.chat.id) == self.additional_id:
@@ -457,14 +530,21 @@ class BotTelegram:
 
     async def error_handler(self, update: types.Update, exception):
         """
-        Error handler in the aiogram library
+        Error handler in the aiogram library.
+
+        Args:
+            update (types.Update): The update object containing information about the user and chat.
+            exception (Exception): The exception object that was raised.
         """
         logging.error(f"An error occurred: {exception.__class__.__name__} - {exception}")
         return True
 
     def _reg_handlers(self, dp: Dispatcher):
         """
-        registration of message handlers
+        Registers message handlers.
+
+        Args:
+            dp (Dispatcher): The dispatcher object for registering bot handlers and commands.
         """
         dp.register_message_handler(self.start, commands="start")
         dp.register_message_handler(self.set_language, commands="switch_language")
@@ -489,7 +569,7 @@ class BotTelegram:
 
     def run(self):
         """
-        bot startup
+        Starts the bot.
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
