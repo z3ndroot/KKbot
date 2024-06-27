@@ -34,8 +34,10 @@ def main():
     # Setup logging
     file_log = logging.FileHandler('log/chat.log')
     console_out = logging.StreamHandler()
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO,
-                        handlers=(file_log, console_out))
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(pathname)s:%(lineno)d - %(funcName)s',
+        level=logging.INFO,
+        handlers=(file_log, console_out))
 
     if len(missing_folder) > 0:
         logging.info(f'These folders {", ".join(missing_folder)} were missing and were successfully created')
