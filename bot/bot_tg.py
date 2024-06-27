@@ -297,7 +297,7 @@ class BotTelegram:
             rows = await self.gs.google_sheet_unloading_support_rows()
             await self.db_admin.unloading(rows)
         except Exception as e:
-            logging.error('An error occurred during __update_support_rows_for_database method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def unloading_from_tables(self, message: types.Message):
@@ -459,7 +459,7 @@ class BotTelegram:
         """
         Error handler in the aiogram library
         """
-        logging.error(f'Caused by the update error: {exception}')
+        logging.error(f"An error occurred: {exception.__class__.__name__} - {exception}")
         return True
 
     def _reg_handlers(self, dp: Dispatcher):
