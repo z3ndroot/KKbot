@@ -41,7 +41,7 @@ class User:
                 if result:
                     return result[0]
         except Exception as e:
-            logging.error('An error occurred during get_name method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def get_localized(self, id_telegram):
@@ -61,7 +61,7 @@ class User:
                     return result[0]
                 return "ru"
         except Exception as e:
-            logging.error('An error occurred during get_name method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def get_support_line(self, id_telegram):
@@ -120,5 +120,5 @@ class User:
 
             return list_skill[counter]
         except Exception as e:
-            logging.error('An error occurred during output_skill_counter method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
