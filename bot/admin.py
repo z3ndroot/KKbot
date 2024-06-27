@@ -165,7 +165,7 @@ class Admin:
                         logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
-            logging.error('An error occurred during output_skill_counter method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def user_update(self, list_user):
@@ -201,7 +201,7 @@ class Admin:
                         logging.warning(f"This id: {user.id} is duplicated in the google table.")
                 await cursor.commit()
         except Exception as e:
-            logging.error('An error occurred during user_update method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def get_user_from_database(self):
@@ -218,7 +218,7 @@ class Admin:
                 async with aiofiles.open('db/user.json', 'w', encoding="UTF8") as file:
                     await file.write(json.dumps(result, indent=4, ensure_ascii=False))
         except Exception as e:
-            logging.error('An error occurred during get_user_from_database method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
 
     async def get_id_from_database(self):
@@ -233,7 +233,7 @@ class Admin:
                             """)
                 return users
         except Exception as e:
-            logging.error('An error occurred during get_user_from_database method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
     async def admin_update(self, list_admin):
         """
@@ -267,5 +267,5 @@ class Admin:
                         logging.warning(f'There was a problem with {i}')
                 await cursor.commit()
         except Exception as e:
-            logging.error('An error occurred during admin_update method execution: %s', e)
+            logging.error(f"An error occurred: {e.__class__.__name__} - {e}")
             raise e
