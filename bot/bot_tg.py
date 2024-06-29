@@ -84,6 +84,10 @@ class BotTelegram:
             await message.reply(
                 f"{self.localized.get_message('hello', lang)}, {message.from_user.first_name}",
                 reply_markup=self.localized.get_keyboard('get_task_butt', lang))
+        else:
+            logging.warning(
+                f'Unauthorized user: @{message.from_user.username} {message.from_user.full_name} '
+                f'{message.from_user.id}')
 
     async def send_commands(self, dp: Dispatcher):
         """
